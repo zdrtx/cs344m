@@ -50,6 +50,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include<stdio.h>         // needed for printf
 #include "WorldModel.h"
 
+#define sigmoid(x) (1/(1+exp(-x)))
+
+#define sigmoid_deriv(x) (1/((1+exp(-x))*(1+exp(x))))
+
+#define soft_not(x) (1-(x))
+
+#define soft_and(x, y) ((x)*(y))
+
+#define soft_or(x,y) (1-(1-(x))*(1-(y)))
+
+#define soft_greater(x,y,delta) (sigmoid(((x)-(y))/(delta)))
+
+#define soft_less(x,y,delta) (sigmoid(((y)-(x))/(delta)))
+
+float soft_equal(float x, float y, float delta){
+  float z = (x-y)/delta;
+  return exp(-z*z);
+}
+
+float soft_if(float p, float x, float y){
+  return p*x + (1-p)*y;
+}
 /*! This method returns the number of objects that are within the circle 'c'
     Only objects are taken into account that are part of the set 'set' and
     have a confidence higher than the threshold defined in PlayerSettings.
@@ -1480,6 +1502,48 @@ VecPosition WorldModel::getStrategicPosition( ObjectT obj, FormationT ft )
     \return VecPosition strategic position for player 'iPlayer' */
 VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
 {
+  int iIndex;
+  ObjectSetT set = OBJECT_SET_TEAMMATES_NO_GOALIE;
+  int count = 0;
+
+  VecPosition aggregate_force = VecPosition(0, 0);
+  VecPosition myPosition;
+
+  for ( ObjectT obj = iterateObjectStart(iIndex, set);
+        obj != OBJECT_ILLEGAL;
+        obj = iterateObjectNext(iIndex, set) ) {
+
+    PlayerObject *pob = (PlayerObject *) getObjectPtrFromType(obj);
+    VecPosition relativePosition = pob->getRelativePosition();
+    relativePosition.normalize();
+    double dist = pob->getRelativeDistance();
+    
+    if (dist == 0) {
+      myPosition = pob->getGlobalPosition();
+    }
+
+    float force = soft_equal(dist, 20, 10) - 2*soft_less(dist, 20, 10);
+    relativePosition.setMagnitude(force);
+
+    aggregate_force += relativePosition;
+
+    cout << iIndex << ", " << relativePosition << endl;
+
+  }
+  iterateObjectDone(iIndex);
+
+  float forceX = 5 / (myPosition.getX() - (-52.5)) - 5 / (52.5 - myPosition.getX());
+  float forceY = 5 / (myPosition.getY() - (-34)) - 5 / (34 - myPosition.getY());
+  aggregate_force += VecPosition(forceX, forceY) * 5;
+  cout << forceX << ", " << forceY << endl;
+  
+
+  cout << "my position: " << myPosition << endl;
+  cout << "aggregate force: " << aggregate_force << endl;
+
+  return myPosition + aggregate_force * 10;
+
+/*
   if( iPlayer > MAX_TEAMMATES )
     cerr << "WM:getStrategicPosition with player nr " << iPlayer << endl;
 
@@ -1536,6 +1600,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
                           bOwnBall, PS->getMaxYPercentage(),
 					  ft );
   return pos;
+*/
 }
 
 /*! This method returns a global position on the field which denotes

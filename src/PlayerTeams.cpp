@@ -67,6 +67,9 @@ SoccerCommand Player::deMeer5(  )
 
   if( WM->isBeforeKickOff( ) )
   {
+
+    ACT->putCommandInQueue( soc=teleportToPos( VecPosition(-10, -10) ));
+    return soc;
     if( WM->isKickOffUs( ) && WM->getPlayerNumber() == 9 ) // 9 takes kick
     {
       if( WM->isBallKickable() )
