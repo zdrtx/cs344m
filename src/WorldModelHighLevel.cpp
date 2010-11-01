@@ -1505,6 +1505,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   int iIndex;
   ObjectSetT set = OBJECT_SET_TEAMMATES_NO_GOALIE;
   int count = 0;
+  PlayerObject *myself = (PlayerObject *) myself;
 
   VecPosition aggregate_force = VecPosition(0, 0);
   VecPosition myPosition;
@@ -1527,19 +1528,29 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
 
     aggregate_force += relativePosition;
 
-    cout << iIndex << ", " << relativePosition << endl;
+    myself = obj;
+    //cout << iIndex << ", " << relativePosition << endl;
 
   }
   iterateObjectDone(iIndex);
 
   float forceX = 5 / (myPosition.getX() - (-52.5)) - 5 / (52.5 - myPosition.getX());
   float forceY = 5 / (myPosition.getY() - (-34)) - 5 / (34 - myPosition.getY());
-  aggregate_force += VecPosition(forceX, forceY) * 5;
-  cout << forceX << ", " << forceY << endl;
-  
+  aggregate_force += VecPosition(forceX, forceY) * 10;
+  //cout << forceX << ", " << forceY << endl;
 
-  cout << "my position: " << myPosition << endl;
-  cout << "aggregate force: " << aggregate_force << endl;
+  if (myPosition.getX() < 47.5) {
+    aggregate_force += VecPosition(3, 0);
+  }
+
+  if (isOnside(myself)) {
+    aggregate_force += 5 / (myPosition.getX() - getOffsideX()) - 5;
+  } else {
+    aggregate_force += 5 / (getoffsideX() - myPosition.getX()) - 5;
+  }
+
+  //cout << "my position: " << myPosition << endl;
+  //cout << "aggregate force: " << aggregate_force << endl;
 
   return myPosition + aggregate_force * 10;
 
