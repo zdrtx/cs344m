@@ -1527,7 +1527,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
     float force = soft_equal(dist, 20, 10) - 2*soft_less(dist, 20, 10);
     relativePosition.setMagnitude(force);
 
-    aggregate_force += relativePosition;
+    aggregate_force += relativePosition * 1.3;
 
     //cout << iIndex << ", " << relativePosition << endl;
 
@@ -1543,7 +1543,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   //cout << forceX << ", " << forceY << endl;
 
   if (myPosition.getX() < PITCH_LENGTH/2 - 5) {
-    aggregate_force += VecPosition(3, 0);
+    aggregate_force += VecPosition(3, 0) * 3;
   }
 
   if (isOnside(myself)) {
@@ -1555,7 +1555,20 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   //cout << "my position: " << myPosition << endl;
   //cout << "aggregate force: " << aggregate_force << endl;
 
-  return myPosition + aggregate_force * 10;
+  VecPosition result = myPosition + aggregate_force * 10;
+  if (result.getX() > PITCH_LENGTH/2) {
+    result.setX(PITCH_LENGTH/2);
+  } else if (result.getX() < -PITCH_LENGTH/2) {
+    result.setX(-PITCH_LENGTH/2);
+  }
+
+  if (result.getY() > PITCH_WIDTH/2) {
+    result.setY(PITCH_WIDTH/2);
+  } else if (result.getY() < -PITCH_WIDTH/2) {
+    result.setY(-PITCH_WIDTH/2);
+  }
+
+  return result;
 
 /*
   if( iPlayer > MAX_TEAMMATES )
