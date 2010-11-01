@@ -143,6 +143,21 @@ void BasicCoach::mainLoopNormal( )
       substitutePlayer( 10, 3 );
       substitutePlayer( 11, 4 );
       bSubstituted = true;
+    } else {
+      cout << "oh, hai, coach" << endl;
+
+      int iIndex;
+      ObjectSetT set = OBJECT_SET_TEAMMATES_NO_GOALIE;
+
+      for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
+            obj != OBJECT_ILLEGAL;
+            obj = WM->iterateObjectNext(iIndex, set) ) {
+        cout << iIndex << endl;
+        cout << WM->getGlobalPosition(obj) << endl;
+      }
+
+      WM->iterateObjectDone(iIndex);
+
     }
   
     if( Log.isInLogLevel(  456 ) )
