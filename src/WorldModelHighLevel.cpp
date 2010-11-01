@@ -1505,7 +1505,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   int iIndex;
   ObjectSetT set = OBJECT_SET_TEAMMATES_NO_GOALIE;
   int count = 0;
-  PlayerObject *myself = (PlayerObject *) myself;
+  ObjectT myself;
 
   VecPosition aggregate_force = VecPosition(0, 0);
   VecPosition myPosition;
@@ -1520,6 +1520,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
     double dist = pob->getRelativeDistance();
     
     if (dist == 0) {
+      myself = obj;
       myPosition = pob->getGlobalPosition();
     }
 
@@ -1528,7 +1529,6 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
 
     aggregate_force += relativePosition;
 
-    myself = obj;
     //cout << iIndex << ", " << relativePosition << endl;
 
   }
@@ -1546,7 +1546,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   if (isOnside(myself)) {
     aggregate_force += 5 / (myPosition.getX() - getOffsideX()) - 5;
   } else {
-    aggregate_force += 5 / (getoffsideX() - myPosition.getX()) - 5;
+    aggregate_force += 5 / (getOffsideX() - myPosition.getX()) - 5;
   }
 
   //cout << "my position: " << myPosition << endl;
