@@ -1534,12 +1534,15 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   }
   iterateObjectDone(iIndex);
 
-  float forceX = 5 / (myPosition.getX() - (-52.5)) - 5 / (52.5 - myPosition.getX());
-  float forceY = 5 / (myPosition.getY() - (-34)) - 5 / (34 - myPosition.getY());
+  float forceX = 5 / (myPosition.getX() - (-PITCH_LENGTH/2)) - 
+                 5 / (PITCH_LENGTH/2 - myPosition.getX());
+  float forceY = 5 / (myPosition.getY() - (-PITCH_WIDTH/2)) - 
+                 5 / (PITCH_WIDTH/2 - myPosition.getY());
+
   aggregate_force += VecPosition(forceX, forceY) * 10;
   //cout << forceX << ", " << forceY << endl;
 
-  if (myPosition.getX() < 47.5) {
+  if (myPosition.getX() < PITCH_LENGTH/2 - 5) {
     aggregate_force += VecPosition(3, 0);
   }
 
