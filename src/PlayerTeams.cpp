@@ -67,9 +67,6 @@ SoccerCommand Player::deMeer5(  )
 
   if( WM->isBeforeKickOff( ) )
   {
-
-    ACT->putCommandInQueue( soc=teleportToPos( VecPosition(-10, -10) ));
-    return soc;
     if( WM->isKickOffUs( ) && WM->getPlayerNumber() == 9 ) // 9 takes kick
     {
       if( WM->isBallKickable() )
@@ -113,13 +110,66 @@ SoccerCommand Player::deMeer5(  )
     }
     else if( WM->isBallKickable())                    // if kickable
     {
-      VecPosition posGoal( PITCH_LENGTH/2.0,
-              (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
-      soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
+      //Are we within shooting distance of the opponent's goal?
+    	if( WM->getRelDistanceOpponentGoal() < 25 )
+    	{
+			//If so, shoot towards a random corner of the goal
+			VecPosition posGoal( PITCH_LENGTH/2.0,
+				  (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
+			soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
 
-      ACT->putCommandInQueue( soc );
-      ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
-      Log.log( 100, "kick ball" );
+			ACT->putCommandInQueue( soc );
+			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+			Log.log( 100, "kick ball" );
+    	}
+    	//Is there a teammate we can pass to that's ahead of us?
+    	else
+    	{
+    		ObjectT teammate = WM->iterateObjectStart(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
+    		list<VecPosition> targets;
+    		while(teammate != OBJECT_ILLEGAL)
+    		{
+    			VecPosition posTeammate = WM->getGlobalPosition(teammate);
+    			if( posTeammate.getDistanceTo(WM->getPosOpponentGoal()) < WM->getRelDistanceOpponentGoal() &&
+    					posAgent.getDistanceTo(posTeammate) > 5 &&
+    					posAgent.getDistanceTo(posTeammate) < 35 &&
+    					WM->isOnside(teammate) &&
+    					WM->getListCloseOpponents(posTeammate, 10).size() == 0
+    					//WM->getGlobalPosition(WM->getFastestInSetTo(OBJECT_SET_OPPONENTS, teammate)).getDistanceTo(posTeammate) > 5
+    					)
+    			{
+    				targets.push_back(posTeammate);
+    			}
+    			teammate = WM->iterateObjectNext(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
+    		}
+			list<VecPosition>::iterator itr;
+    		if(targets.size() > 0)
+    		{
+    			//Select target to pass to randomly
+    			int pos = WM->getCurrentCycle() % targets.size();
+    			itr = targets.begin();
+    			for(int i = 0; i < pos; i++)
+    			{
+    				itr++;
+    			}
+    			VecPosition posPass = *itr;
+    			if(posAgent.getDistanceTo(posPass) < 10)
+				{
+					soc = directPass(posPass, PASS_NORMAL);
+				}
+				else
+				{
+					soc = directPass(posPass, PASS_FAST);
+				}
+    		}
+    		else
+    		{
+    			//There are no suitable targets to pass to, so dribble
+    			soc = dribble(WM->getRelAngleOpponentGoal(), DRIBBLE_FAST);
+    		}	
+    	}
+    	ACT->putCommandInQueue( soc );
+		ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
     }
     else if( WM->getFastestInSetTo( OBJECT_SET_TEAMMATES, OBJECT_BALL, &iTmp )
               == WM->getAgentObjectType()  && !WM->isDeadBallThem() )

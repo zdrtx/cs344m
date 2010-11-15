@@ -72,6 +72,12 @@ float soft_equal(float x, float y, float delta){
 float soft_if(float p, float x, float y){
   return p*x + (1-p)*y;
 }
+
+VecPosition soft_if_vector(float p, VecPosition x, VecPosition y){
+  VecPosition v = x * p + y *(1-p);
+  return v;
+}
+
 /*! This method returns the number of objects that are within the circle 'c'
     Only objects are taken into account that are part of the set 'set' and
     have a confidence higher than the threshold defined in PlayerSettings.
@@ -1237,7 +1243,8 @@ ObjectT WorldModel::getLastOpponentDefender( double *dX )
     stands offside. First the opponent with the second highest x coordinate is
     located, then the maximum of this x coordinate and the ball x coordinate
     is returned.
-    \param bIncludeComm boolean indicating whether communicated offside line
+    \param bIncludeComm boolean indicating whether communicated 
+line
           should also be included.
     \return x coordinate of the offside line. */
 double WorldModel::getOffsideX( bool bIncludeComm )
@@ -1502,59 +1509,26 @@ VecPosition WorldModel::getStrategicPosition( ObjectT obj, FormationT ft )
     \return VecPosition strategic position for player 'iPlayer' */
 VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
 {
-  int iIndex;
-  ObjectSetT set = OBJECT_SET_TEAMMATES_NO_GOALIE;
+  
   int count = 0;
   PlayerObject *myself = (PlayerObject *) myself;
+  VecPosition myPosition = getAgentGlobalPosition();
+  float ballDist = Ball.getRelativeDistance();
 
-  VecPosition aggregate_force = VecPosition(0, 0);
-  VecPosition myPosition;
 
-  for ( ObjectT obj = iterateObjectStart(iIndex, set);
-        obj != OBJECT_ILLEGAL;
-        obj = iterateObjectNext(iIndex, set) ) {
+	if(!isBeforeKickOff() && !( isDeadBallUs() || isDeadBallThem() ))
+	{
+  		return myPosition +
+		  getBoundaryForces(myPosition) * 25 +
+		  getOffsidesForce(myPosition) * 25 +
+		  soft_if_vector(soft_less(ballDist, 20, 10), 
+				(getTacticalForces(myPosition) + getClearForce(myPosition)),
+				getStrategicForces(myPosition)) * 10	 
+			+ getBallFollowForce(myPosition) * 2;
 
-    PlayerObject *pob = (PlayerObject *) getObjectPtrFromType(obj);
-    VecPosition relativePosition = pob->getRelativePosition();
-    relativePosition.normalize();
-    double dist = pob->getRelativeDistance();
-    
-    if (dist == 0) {
-      myPosition = pob->getGlobalPosition();
-    }
+	}
+	
 
-    float force = soft_equal(dist, 20, 10) - 2*soft_less(dist, 20, 10);
-    relativePosition.setMagnitude(force);
-
-    aggregate_force += relativePosition;
-
-    myself = obj;
-    //cout << iIndex << ", " << relativePosition << endl;
-
-  }
-  iterateObjectDone(iIndex);
-
-  float forceX = 5 / (myPosition.getX() - (-52.5)) - 5 / (52.5 - myPosition.getX());
-  float forceY = 5 / (myPosition.getY() - (-34)) - 5 / (34 - myPosition.getY());
-  aggregate_force += VecPosition(forceX, forceY) * 10;
-  //cout << forceX << ", " << forceY << endl;
-
-  if (myPosition.getX() < 47.5) {
-    aggregate_force += VecPosition(3, 0);
-  }
-
-  if (isOnside(myself)) {
-    aggregate_force += 5 / (myPosition.getX() - getOffsideX()) - 5;
-  } else {
-    aggregate_force += 5 / (getoffsideX() - myPosition.getX()) - 5;
-  }
-
-  //cout << "my position: " << myPosition << endl;
-  //cout << "aggregate force: " << aggregate_force << endl;
-
-  return myPosition + aggregate_force * 10;
-
-/*
   if( iPlayer > MAX_TEAMMATES )
     cerr << "WM:getStrategicPosition with player nr " << iPlayer << endl;
 
@@ -1611,7 +1585,152 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
                           bOwnBall, PS->getMaxYPercentage(),
 					  ft );
   return pos;
-*/
+
+}
+
+VecPosition WorldModel::getKickOffPosition(int iPlayer)
+{
+	return formations->getStrategicPosition( iPlayer, VecPosition(0, 0), 0,
+                          false, 0, FT_INITIAL );
+}
+
+VecPosition WorldModel::getBoundaryForces(VecPosition myPosition)
+{
+  float xMin = -52.5;
+  float xMax = 52.5;
+  float yMin = -34;
+  float yMax = 34;
+  
+  float forceX = 5 / (myPosition.getX() - xMin) - 5 / (xMax - myPosition.getX());
+  float forceY = 5 / (myPosition.getY() - yMin) - 5 / (yMax - myPosition.getY());
+  //cout << "Boundary forces: " << forceX << ", " << forceY << endl;
+  return VecPosition(forceX, forceY);
+}
+
+VecPosition WorldModel::getOffsidesForce(VecPosition myPosition)
+{
+  float xOff = getOffsideX();
+  float forceX = soft_if(soft_less(xOff - myPosition.getX(), 5, 1), -5, 0);
+  //cout << "Offsides force: " << forceX << endl;
+  return VecPosition(forceX, 0);
+}
+
+VecPosition WorldModel::getStrategicForces(VecPosition myPosition)
+{
+  int iIndex;
+  VecPosition aggregateForce = VecPosition(0, 0);
+  for ( ObjectT obj = iterateObjectStart(iIndex, OBJECT_SET_TEAMMATES);
+        obj != OBJECT_ILLEGAL;
+        obj = iterateObjectNext(iIndex, OBJECT_SET_TEAMMATES) ) {
+
+    PlayerObject *pob = (PlayerObject *) getObjectPtrFromType(obj);
+    VecPosition teammatePosition = pob->getGlobalPosition();
+	VecPosition relativeTeammatePosition = teammatePosition - myPosition;
+    relativeTeammatePosition.normalize();
+    
+    //cout << relativeVector << endl;
+    
+    double dist = pob->getRelativeDistance();
+    float force = soft_equal(dist, 20, 10) - 2*soft_less(dist, 20, 10);
+    aggregateForce += relativeTeammatePosition * force;
+
+    //myself = obj;
+    //cout << iIndex << ", " << relativePosition << endl;
+
+  }
+  iterateObjectDone(iIndex);
+  //cout << "Stategic forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
+  return aggregateForce;
+}
+
+VecPosition WorldModel::getBallFollowForce(VecPosition myPosition)
+{
+  VecPosition ballPos = Ball.getGlobalPosition();
+  VecPosition relativeBallPosition = ballPos - myPosition;
+  relativeBallPosition.normalize();
+  
+  float dist = Ball.getRelativeDistance();
+  float ballForce = soft_if(soft_greater(dist, 15, 15), 0, 0);
+  float lineForce = soft_if(soft_greater(ballPos.getX() - myPosition.getX(), 0, 10), 3, -3);
+  VecPosition lineVector = VecPosition(1, 0);
+  //cout << "Ball Pos " << ballPos << endl;
+  //cout << "Relative Ball forces: " << relativeBallPosition.getX() << ", " << relativeBallPosition.getY() << endl;
+  
+  //return relativeBallPosition * ballForce + lineVector * lineForce;  
+  return lineVector;
+}
+
+VecPosition WorldModel::getTacticalForces(VecPosition myPosition)
+{
+  int iIndex;
+  VecPosition aggregateForce = VecPosition(0, 0);
+  for ( ObjectT obj = iterateObjectStart(iIndex, OBJECT_SET_TEAMMATES_NO_GOALIE);
+        obj != OBJECT_ILLEGAL;
+        obj = iterateObjectNext(iIndex, OBJECT_SET_TEAMMATES_NO_GOALIE) ) {
+
+    PlayerObject *pob = (PlayerObject *) getObjectPtrFromType(obj);
+    VecPosition relativeVector = pob->getRelativePosition();
+    relativeVector.normalize();
+    
+    //cout << relativeVector << endl;
+    
+    double dist = pob->getRelativeDistance();
+    float force = soft_if(soft_less(dist, 8, 3), -5, 0);
+    aggregateForce += relativeVector * force;
+
+    //myself = obj;
+    //cout << iIndex << ", " << relativePosition << endl;
+
+  }
+  iterateObjectDone(iIndex);
+  //cout << "Stategic forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
+  return aggregateForce;
+}
+
+VecPosition WorldModel::getClearForce(VecPosition myPosition)
+{
+  int iIndex;
+  VecPosition ballPosition = Ball.getGlobalPosition();
+  Line passLane = Line::makeLineFromTwoPoints(myPosition, ballPosition);
+  
+  double closestDistToPassLane = 1000;
+  double closestDistToMe = 1000;
+  VecPosition keyDPosition;
+ 
+  for ( ObjectT obj = iterateObjectStart(iIndex, OBJECT_SET_OPPONENTS);
+        obj != OBJECT_ILLEGAL;
+        obj = iterateObjectNext(iIndex, OBJECT_SET_OPPONENTS) ) {
+
+    PlayerObject *pob = (PlayerObject *) getObjectPtrFromType(obj);
+	VecPosition pos = pob->getGlobalPosition();
+    double dist = passLane.getDistanceWithPoint(pos);
+	cout << "D (" << iIndex << "): " << pos << " " << dist << endl;
+    if(dist < closestDistToPassLane)
+	{
+		closestDistToPassLane = dist;
+		closestDistToMe = pob->getRelativeDistance();
+		keyDPosition = pos;
+	}
+  }
+  iterateObjectDone(iIndex);
+  
+  VecPosition orthVec = VecPosition(0, 0);
+  if(closestDistToPassLane != 1000)
+  {
+	  VecPosition interceptPosition = passLane.getPointOnLineClosestTo(keyDPosition);
+	  orthVec = interceptPosition - keyDPosition;
+	  orthVec.normalize();
+	  
+	  float force = soft_if(soft_less(closestDistToMe, 8, 2), -5, 0);
+	  orthVec = orthVec * force;
+  }
+  
+  cout << "Ball Pos: " << ballPosition << endl;
+  cout << "My Pos: " << myPosition << endl;
+  cout << "Key D Pos: " << keyDPosition << endl;
+  cout << "OrthVec: " << orthVec << endl << endl;
+  
+  return orthVec;
 }
 
 /*! This method returns a global position on the field which denotes
@@ -1626,7 +1745,7 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
     - MARK GOAL: marking the opponent by standing at a distance
     'dDist' away from him on the line between him and the center point
     of the goal he attacks. This type of marking will make it
-    difficult for the opponent to score a goal.  - MARK BISECTOR:
+    difficult for the opponent to score a goal.  - MAR	K BISECTOR:
     marking the opponent by standing at a distance 'dDist' away from
     him on the bisector of the ball-opponent-goal angle. This type of
     marking enables the agent to intercept both a direct and a leading
