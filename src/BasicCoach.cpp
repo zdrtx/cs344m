@@ -76,12 +76,24 @@ BasicCoach::BasicCoach( ActHandler* act, WorldModel *wm, ServerSettings *ss,
   bContLoop = true;
   WM->setTeamName( strTeamName );
 
+  int rowIndex;
+  int colIndex;
+
   if( !isTrainer )
     sprintf( str, "(init %s (version %f))", strTeamName, dVersion );
   else
     sprintf( str, "(init (version %f))", dVersion );
 
    ACT->sendMessage( str );
+
+  for (rowIndex = 0; rowIndex < NUM_ROWS; rowIndex++) {
+    for (colIndex = 0; colIndex < NUM_COLS; colIndex++) {
+      teammateCounts[rowIndex][colIndex] = 0;
+      opponentCounts[rowIndex][colIndex] = 0;
+      ballCounts[rowIndex][colIndex] = 0;
+    }
+  }
+
 }
 
 BasicCoach::~BasicCoach( )
@@ -143,6 +155,74 @@ void BasicCoach::mainLoopNormal( )
       substitutePlayer( 10, 3 );
       substitutePlayer( 11, 4 );
       bSubstituted = true;
+    } else {
+
+      //ACT->sendCommand(SoccerCommand(CMD_SAY, "hello"));
+      ACT->sendMessage("(say hello)");
+
+      int iIndex;
+      ObjectSetT set;
+
+      // TEAMMATES
+      set = OBJECT_SET_TEAMMATES;
+
+      for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
+            obj != OBJECT_ILLEGAL;
+            obj = WM->iterateObjectNext(iIndex, set) ) {
+        VecPosition playerPosition = WM->getGlobalPosition(obj);
+        int rowIndex = (int) floor(playerPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
+        int colIndex = (int) floor(playerPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
+
+        if (rowIndex < 0 || colIndex < 0 || 
+            rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
+          continue;
+        }
+
+        teammateCounts[rowIndex][colIndex]++;
+
+        cout << "teammateCounts[" << rowIndex << "][" << colIndex << 
+          "] incremented to " << teammateCounts[rowIndex][colIndex] << endl;
+      }
+
+      WM->iterateObjectDone(iIndex);
+
+      // OPPONENTS
+      set = OBJECT_SET_OPPONENTS;
+
+      for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
+            obj != OBJECT_ILLEGAL;
+            obj = WM->iterateObjectNext(iIndex, set) ) {
+        VecPosition playerPosition = WM->getGlobalPosition(obj);
+        int rowIndex = (int) floor(playerPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
+        int colIndex = (int) floor(playerPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
+
+        if (rowIndex < 0 || colIndex < 0 || 
+            rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
+          continue;
+        }
+
+        opponentCounts[rowIndex][colIndex]++;
+
+        cout << "opponentCounts[" << rowIndex << "][" << colIndex <<
+          "] incremented to " << opponentCounts[rowIndex][colIndex] << endl;
+      }
+
+      WM->iterateObjectDone(iIndex);
+
+      // BALL
+      VecPosition ballPosition = WM->getBallPos();
+      int rowIndex = (int) floor(ballPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
+      int colIndex = (int) floor(ballPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
+
+      if (!(rowIndex < 0 || colIndex < 0 || 
+          rowIndex >= NUM_ROWS || colIndex >= NUM_COLS)) {
+        ballCounts[rowIndex][colIndex]++;
+
+        cout << "ballCounts[" << rowIndex << "][" << colIndex <<
+          "] incremented to " << ballCounts[rowIndex][colIndex] << endl;
+      }
+
+
     }
   
     if( Log.isInLogLevel(  456 ) )

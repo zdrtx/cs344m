@@ -1515,10 +1515,9 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
   VecPosition myPosition = getAgentGlobalPosition();
   float ballDist = Ball.getRelativeDistance();
 
-
 	if(!isBeforeKickOff() && !( isDeadBallUs() || isDeadBallThem() ))
 	{
-  		return myPosition +
+		return myPosition +
 		  getBoundaryForces(myPosition) * 25 +
 		  getOffsidesForce(myPosition) * 25 +
 		  soft_if_vector(soft_less(ballDist, 20, 10), 
@@ -1528,7 +1527,6 @@ VecPosition WorldModel::getStrategicPosition( int iPlayer, FormationT ft )
 
 	}
 	
-
   if( iPlayer > MAX_TEAMMATES )
     cerr << "WM:getStrategicPosition with player nr " << iPlayer << endl;
 

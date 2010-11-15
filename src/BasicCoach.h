@@ -56,6 +56,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   void* stdin_callback( void * v );
 #endif
 
+#define FIELD_CELL_SIZE 1
+#define NUM_ROWS (int) PITCH_WIDTH
+#define NUM_COLS (int) PITCH_LENGTH
+
 /*! This class starts a simple coach, which actions are defined in the method
     mainLoop. It uses an ActHandler to send actions to the server and can
     receive information from the WorldModel. The declaration of the different
@@ -69,6 +73,10 @@ protected:
   
   HeteroPlayerSettings m_player_types[MAX_HETERO_PLAYERS];
   bool bContLoop;      /*!< bool to indicate whether to stop or continue     */
+
+  long teammateCounts [NUM_ROWS][NUM_COLS];
+  long opponentCounts [NUM_ROWS][NUM_COLS]; 
+  long ballCounts [NUM_ROWS][NUM_COLS]; 
 
 public:
   BasicCoach( ActHandler* a, WorldModel *wm, ServerSettings *ss,
