@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /********************* DEFINES ***********************************************/
 /*****************************************************************************/
 
+#define NUM_HOTSPOTS 3
 #define MAX_TEAMMATES          11       /*!< Maximum number of teammates     */
 #define MAX_OPPONENTS          11       /*!< Maximum number of opponents     */
 #define MAX_HETERO_PLAYERS      7       /*!< Maximum number of hetero players*/

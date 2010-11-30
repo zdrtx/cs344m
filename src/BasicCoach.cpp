@@ -160,8 +160,17 @@ void BasicCoach::mainLoopNormal( )
 
       //ACT->sendCommand(SoccerCommand(CMD_SAY, "hello"));
       //ACT->sendMessage("(say (freeform \"opp_off_pos 0 0\"))");
-      updateCounts();
-      sendMessage();
+      if (!WM->isTimeStopped()) {
+        updateCounts();
+      }
+      if (WM->isTimeStopped() && WM->getCurrentCycle() > lastCycleSent + SEND_FREQ) {
+        sendMessage();
+        lastCycleSent = WM->getCurrentCycle();
+      }
+      if (!WM->isTimeStopped() && WM->getCurrentCycle() > lastCycleDecayed + DECAY_FREQ) {
+        decayCounts();
+        lastCycleDecayed = WM->getCurrentCycle();
+      }
 
     }
   
@@ -345,26 +354,30 @@ void BasicCoach::updateCounts()
   }
 }
 
+void BasicCoach::decayCounts() {
+  int rowIndex, colIndex;
+
+  for (rowIndex = 0; rowIndex < NUM_ROWS; rowIndex++) {
+    for (colIndex = 0; colIndex < NUM_COLS; colIndex++) {
+      teammateCounts[rowIndex][colIndex]--;
+      opponentCounts[rowIndex][colIndex]--;
+      ballCounts[rowIndex][colIndex]--;
+    }
+  }
+}
+
 void BasicCoach::sendMessage()
 {
   int rowIndex, colIndex;
-  int maxTeammateValue, maxOpponentValue, maxBallValue;
-  double maxTeammateX, maxTeammateY;
-  double maxOpponentX, maxOpponentY;
-  double maxBallX, maxBallY;
+  int maxTeammateValue[NUM_HOTSPOTS];
+  int maxOpponentValue[NUM_HOTSPOTS];
+  int maxBallValue[NUM_HOTSPOTS];
 
-  char *msg = new char[100];
+  double maxTeammateX[NUM_HOTSPOTS], maxTeammateY[NUM_HOTSPOTS];
+  double maxOpponentX[NUM_HOTSPOTS], maxOpponentY[NUM_HOTSPOTS];
+  double maxBallX[NUM_HOTSPOTS], maxBallY[NUM_HOTSPOTS];
 
-  maxTeammateValue = 1;
-  maxOpponentValue = 1;
-  maxBallValue = 1;
-
-  maxOpponentX = 0;
-  maxOpponentY = 0;
-  maxTeammateX = 0;
-  maxTeammateY = 0;
-  maxBallX = 0;
-  maxBallY = 0;
+  char *msg = new char[300];
 
   for (rowIndex = 0; rowIndex < NUM_ROWS; rowIndex++)
   {
@@ -372,30 +385,81 @@ void BasicCoach::sendMessage()
     {
       double x = (colIndex * CELL_LENGTH) + (CELL_LENGTH / 2) - (PITCH_LENGTH / 2);
       double y = (rowIndex * CELL_WIDTH) + (CELL_WIDTH / 2) - (PITCH_WIDTH / 2);
+      
       // TEAMMATES
-      if (teammateCounts[rowIndex][colIndex] > maxTeammateValue) {
-        maxTeammateValue = teammateCounts[rowIndex][colIndex];
-        maxTeammateX = x;
-        maxTeammateY = y;
+      if (teammateCounts[rowIndex][colIndex] > maxTeammateValue[0]) {
+        maxTeammateValue[0] = teammateCounts[rowIndex][colIndex];
+        maxTeammateX[0] = x;
+        maxTeammateY[0] = y;
+      }
+      else if (teammateCounts[rowIndex][colIndex] > maxTeammateValue[1]) {
+        maxTeammateValue[1] = teammateCounts[rowIndex][colIndex];
+        maxTeammateX[1] = x;
+        maxTeammateY[1] = y;
+      }
+      else if (teammateCounts[rowIndex][colIndex] > maxTeammateValue[2]) {
+        maxTeammateValue[2] = teammateCounts[rowIndex][colIndex];
+        maxTeammateX[2] = x;
+        maxTeammateY[2] = y;
       }
       // OPPONENTS
-      if (opponentCounts[rowIndex][colIndex] > maxOpponentValue) {
-        maxOpponentValue = opponentCounts[rowIndex][colIndex];
-        maxOpponentX = x;
-        maxOpponentY = y;
+      if (opponentCounts[rowIndex][colIndex] > maxOpponentValue[0]) {
+        maxOpponentValue[0] = opponentCounts[rowIndex][colIndex];
+        maxOpponentX[0] = x;
+        maxOpponentY[0] = y;
+      }
+      else if (opponentCounts[rowIndex][colIndex] > maxOpponentValue[1]) {
+        maxOpponentValue[1] = opponentCounts[rowIndex][colIndex];
+        maxOpponentX[1] = x;
+        maxOpponentY[1] = y;
+      }
+      else if (opponentCounts[rowIndex][colIndex] > maxOpponentValue[2]) {
+        maxOpponentValue[2] = opponentCounts[rowIndex][colIndex];
+        maxOpponentX[2] = x;
+        maxOpponentY[2] = y;
       }
       // BALL
-      if (ballCounts[rowIndex][colIndex] > maxBallValue) {
-        maxBallValue = ballCounts[rowIndex][colIndex];
-        maxBallX = x;
-        maxBallY = y;
+      if (ballCounts[rowIndex][colIndex] > maxBallValue[0]) {
+        maxBallValue[0] = ballCounts[rowIndex][colIndex];
+        maxBallX[0] = x;
+        maxBallY[0] = y;
+      }
+      else if (ballCounts[rowIndex][colIndex] > maxBallValue[1]) {
+        maxBallValue[1] = ballCounts[rowIndex][colIndex];
+        maxBallX[1] = x;
+        maxBallY[1] = y;
+      }
+      else if (ballCounts[rowIndex][colIndex] > maxBallValue[2]) {
+        maxBallValue[2] = ballCounts[rowIndex][colIndex];
+        maxBallX[2] = x;
+        maxBallY[2] = y;
       }
     }
   }
 
-  sprintf(msg, "(say (freeform \"(team %.3f %.3f) (opp %.3f %.3f) (ball %.3f %.3f)\"))",
-    maxTeammateX, maxTeammateY, maxOpponentX, maxOpponentY, maxBallX, maxBallY
+  sprintf(
+    msg,
+    "(say (freeform \"(team %.1f %.1f %.1f %.1f %.1f %.1f) (opp %.1f %.1f %.1f %.1f %.1f %.1f) (ball %.1f %.1f %.1f %.1f %.1f %.1f)\"))",
+    maxTeammateX[0], 
+    maxTeammateY[0], 
+    maxTeammateX[1], 
+    maxTeammateY[1], 
+    maxTeammateX[2], 
+    maxTeammateY[2], 
+    maxOpponentX[0], 
+    maxOpponentY[0], 
+    maxOpponentX[1], 
+    maxOpponentY[1], 
+    maxOpponentX[2], 
+    maxOpponentY[2], 
+    maxBallX[0], 
+    maxBallY[0],
+    maxBallX[1], 
+    maxBallY[1],
+    maxBallX[2], 
+    maxBallY[2]
   );
+  cout << msg << endl;
   ACT->sendMessage(msg);
 
 }

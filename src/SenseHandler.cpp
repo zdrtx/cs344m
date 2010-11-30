@@ -711,22 +711,56 @@ bool SenseHandler::analyzeCoachMessage( char *strMsg )
 
   char *string = strstr(strMsg, "(team");
   if (string != NULL) {
-    double maxTeammateX, maxTeammateY, maxOpponentX, maxOpponentY, maxBallX, maxBallY;
+    double maxTeammateX[NUM_HOTSPOTS], maxTeammateY[NUM_HOTSPOTS];
+    double maxOpponentX[NUM_HOTSPOTS], maxOpponentY[NUM_HOTSPOTS];
+    double maxBallX[NUM_HOTSPOTS], maxBallY[NUM_HOTSPOTS];
+
+    VecPosition hotTeammatePositions[NUM_HOTSPOTS];
+    VecPosition hotOpponentPositions[NUM_HOTSPOTS];
+    VecPosition hotBallPositions[NUM_HOTSPOTS];
+
 
     sscanf(
       string, 
-      "(team %lf %lf) (opp %lf %lf) (ball %lf %lf)\"))", 
-      &maxTeammateX, 
-      &maxTeammateY, 
-      &maxOpponentX, 
-      &maxOpponentY, 
-      &maxBallX, 
-      &maxBallY
+      "(team %lf %lf %lf %lf %lf %lf) (opp %lf %lf %lf %lf %lf %lf) (ball %lf %lf %lf %lf %lf %lf))\"))",
+      &maxTeammateX[0], 
+      &maxTeammateY[0], 
+      &maxTeammateX[1], 
+      &maxTeammateY[1], 
+      &maxTeammateX[2], 
+      &maxTeammateY[2], 
+      &maxOpponentX[0], 
+      &maxOpponentY[0], 
+      &maxOpponentX[1], 
+      &maxOpponentY[1], 
+      &maxOpponentX[2], 
+      &maxOpponentY[2], 
+      &maxBallX[0], 
+      &maxBallY[0],
+      &maxBallX[1], 
+      &maxBallY[1],
+      &maxBallX[2], 
+      &maxBallY[2]
     );
 
-    WM->setHotTeammatePosition(VecPosition(maxTeammateX, maxTeammateY));
-    WM->setHotOpponentPosition(VecPosition(maxOpponentX, maxOpponentY));
-    WM->setHotBallPosition(VecPosition(maxBallX, maxBallY));
+    int index;
+    for (index = 0; index < NUM_HOTSPOTS; index++)
+    {
+      hotTeammatePositions[index] = VecPosition(maxTeammateX[index], maxTeammateY[index]);
+      hotOpponentPositions[index] = VecPosition(maxOpponentX[index], maxOpponentY[index]);
+      hotBallPositions[index] = VecPosition(maxBallX[index], maxBallY[index]);
+      /*
+      if (WM->getPlayerNumber() == 2) {
+      cout << "teammate " << index << " " << hotTeammatePositions[index] << endl;
+      cout << "opponent " << index << " " << hotOpponentPositions[index] << endl;
+      cout << "ball " << index << " " << hotBallPositions[index] << endl;
+      }
+      */
+    }
+
+    WM->setHotTeammatePositions(hotTeammatePositions);
+    WM->setHotOpponentPositions(hotOpponentPositions);
+    WM->setHotBallPositions(hotBallPositions);
 
   }
 

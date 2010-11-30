@@ -57,9 +57,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define NUM_ROWS 9 
-#define NUM_COLS 9 
+#define NUM_COLS 11 
 #define CELL_WIDTH (PITCH_WIDTH / NUM_ROWS)
 #define CELL_LENGTH (PITCH_LENGTH / NUM_COLS)
+#define SEND_FREQ 50
+#define DECAY_FREQ 50
 
 /*! This class starts a simple coach, which actions are defined in the method
     mainLoop. It uses an ActHandler to send actions to the server and can
@@ -81,6 +83,10 @@ protected:
 
   void updateCounts();
   void sendMessage();
+  void decayCounts();
+
+  int lastCycleSent;
+  int lastCycleDecayed;
 
 public:
   BasicCoach( ActHandler* a, WorldModel *wm, ServerSettings *ss,

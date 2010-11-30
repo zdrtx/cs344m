@@ -1751,37 +1751,47 @@ bool WorldModel::setSidePenalty( SideT side )
   return true;
 }
 
-VecPosition WorldModel::getHotTeammatePosition()
+VecPosition* WorldModel::getHotTeammatePositions()
 {
-  return hotTeammatePosition;
+  return hotTeammatePositions;
 }
 
-VecPosition WorldModel::getHotOpponentPosition()
+VecPosition* WorldModel::getHotOpponentPositions()
 {
-  return hotOpponentPosition;
+  return hotOpponentPositions;
 }
 
-VecPosition WorldModel::getHotBallPosition()
+VecPosition* WorldModel::getHotBallPositions()
 {
-  return hotBallPosition;
+  return hotBallPositions;
 }
 
-void WorldModel::setHotTeammatePosition(VecPosition pos)
+void WorldModel::setHotTeammatePositions(VecPosition *pos)
 {
-  hotTeammatePosition = pos;
+  int index;
+  for (index = 0; index < NUM_HOTSPOTS; index++)
+  {
+    hotTeammatePositions[index] = pos[index];
+  }
 }
 
-void WorldModel::setHotOpponentPosition(VecPosition pos)
+void WorldModel::setHotOpponentPositions(VecPosition *pos)
 {
-  hotOpponentPosition = pos;
+  int index;
+  for (index = 0; index < NUM_HOTSPOTS; index++)
+  {
+    hotOpponentPositions[index] = pos[index];
+  }
 }
 
-void WorldModel::setHotBallPosition(VecPosition pos)
+void WorldModel::setHotBallPositions(VecPosition *pos)
 {
-  hotBallPosition = pos;
+  int index;
+  for (index = 0; index < NUM_HOTSPOTS; index++)
+  {
+    hotBallPositions[index] = pos[index];
+  }
 }
-
-
 
 /*! This method checks whether the current play mode indicates that we have
     a corner kick. When the specified PlayModeT equals PM_ILLEGAL (default),

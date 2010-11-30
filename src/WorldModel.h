@@ -61,7 +61,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #include <sys/time.h>     // needed for gettimeofday
 #endif
 
-
 extern Logger Log;          // defined in Logger.C
 extern Logger LogDraw;      // defined in Logger.C
 
@@ -232,9 +231,9 @@ private:
   // side of penalty shootout
   SideT         m_sidePenalty;
 
-  VecPosition hotTeammatePosition;
-  VecPosition hotOpponentPosition;
-  VecPosition hotBallPosition;
+  VecPosition hotTeammatePositions[NUM_HOTSPOTS];
+  VecPosition hotOpponentPositions[NUM_HOTSPOTS];
+  VecPosition hotBallPositions[NUM_HOTSPOTS];
 
 public:
 
@@ -450,13 +449,12 @@ public:
   SideT         getSidePenalty             (                                 );
   bool          setSidePenalty             ( SideT          side             );
 
-  VecPosition getHotTeammatePosition();
-  VecPosition getHotOpponentPosition();
-  VecPosition getHotBallPosition();
-  void setHotTeammatePosition(VecPosition pos);
-  void setHotOpponentPosition(VecPosition pos);
-  void setHotBallPosition(VecPosition pos);
-
+  VecPosition* getHotTeammatePositions();
+  VecPosition* getHotOpponentPositions();
+  VecPosition* getHotBallPositions();
+  void setHotTeammatePositions(VecPosition *pos);
+  void setHotOpponentPositions(VecPosition *pos);
+  void setHotBallPositions(VecPosition *pos);
 
   ////////////////////////// UPDATE METHODS (WorldModelUpdate.C)///////////////
 

@@ -248,7 +248,7 @@ return soc;
  * Begin research code
  */
  
-#define DEBUG 1
+#define DEBUG 0
 
 #define sigmoid(x) (1/(1+exp(-x)))
 
@@ -593,25 +593,35 @@ VecPosition Player::getDefensiveForce(VecPosition myPosition)
 
 VecPosition Player::getHotSpotForce(VecPosition myPosition)
 {
-  if(isDefensive(myPosition))
+  VecPosition accumulator = VecPosition(0,0);
+  int index;
+  for (index = 0; index < NUM_HOTSPOTS; index++) 
   {
-    VecPosition unitVector = (WM->getHotBallPosition() - myPosition).normalize();
-    float dist = WM->getRelativeDistance(OBJECT_BALL);
-    float force = soft_greater(dist, 30, 10);
+    if(isDefensive(myPosition))
+    {
+      /*
+      if (WM->getPlayerNumber() == 2) {
+        cout << index << " : " << WM->getHotBallPositions()[index] << endl;
+      }
+      */
+      VecPosition unitVector = (WM->getHotBallPositions()[index] - myPosition).normalize();
+      float dist = WM->getRelativeDistance(OBJECT_BALL);
+      float force = soft_greater(dist, 30, 10);
 
-    return unitVector * force;
-  } 
-  else if (isOffensive(myPosition))
-  {
-    VecPosition vector = myPosition - WM->getHotOpponentPosition();
-    VecPosition unitVector = vector.normalize();
-    float dist = vector.getMagnitude();
-    float force = soft_greater(dist, 30, 10);
+      accumulator += unitVector * force;
+    } 
+    else if (isOffensive(myPosition))
+    {
+      VecPosition vector = myPosition - WM->getHotOpponentPositions()[index];
+      VecPosition unitVector = vector.normalize();
+      float dist = vector.getMagnitude();
+      float force = soft_greater(dist, 30, 10);
 
-    return unitVector * force;
+      accumulator += unitVector * force;
+    }
   }
 
-  return VecPosition(0, 0);
+  return accumulator;
 }
 
 /*
