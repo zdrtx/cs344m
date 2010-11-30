@@ -56,9 +56,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   void* stdin_callback( void * v );
 #endif
 
-#define FIELD_CELL_SIZE 1
-#define NUM_ROWS (int) PITCH_WIDTH
-#define NUM_COLS (int) PITCH_LENGTH
+#define NUM_ROWS 9 
+#define NUM_COLS 9 
+#define CELL_WIDTH (PITCH_WIDTH / NUM_ROWS)
+#define CELL_LENGTH (PITCH_LENGTH / NUM_COLS)
 
 /*! This class starts a simple coach, which actions are defined in the method
     mainLoop. It uses an ActHandler to send actions to the server and can
@@ -77,6 +78,9 @@ protected:
   long teammateCounts [NUM_ROWS][NUM_COLS];
   long opponentCounts [NUM_ROWS][NUM_COLS]; 
   long ballCounts [NUM_ROWS][NUM_COLS]; 
+
+  void updateCounts();
+  void sendMessage();
 
 public:
   BasicCoach( ActHandler* a, WorldModel *wm, ServerSettings *ss,

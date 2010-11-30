@@ -705,7 +705,30 @@ bool SenseHandler::analyzePlayerMessage( int iTime, char *strMsg )
 
 bool SenseHandler::analyzeCoachMessage( char *strMsg )
 {
+  string strMsgString = strMsg;
+
   Log.log( 605, "received coach messages: %s" , strMsg );
+
+  char *string = strstr(strMsg, "(team");
+  if (string != NULL) {
+    double maxTeammateX, maxTeammateY, maxOpponentX, maxOpponentY, maxBallX, maxBallY;
+
+    sscanf(
+      string, 
+      "(team %lf %lf) (opp %lf %lf) (ball %lf %lf)\"))", 
+      &maxTeammateX, 
+      &maxTeammateY, 
+      &maxOpponentX, 
+      &maxOpponentY, 
+      &maxBallX, 
+      &maxBallY
+    );
+
+    WM->setHotTeammatePosition(VecPosition(maxTeammateX, maxTeammateY));
+    WM->setHotOpponentPosition(VecPosition(maxOpponentX, maxOpponentY));
+    WM->setHotBallPosition(VecPosition(maxBallX, maxBallY));
+
+  }
 
   return true;
 }

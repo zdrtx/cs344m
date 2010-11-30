@@ -232,6 +232,10 @@ private:
   // side of penalty shootout
   SideT         m_sidePenalty;
 
+  VecPosition hotTeammatePosition;
+  VecPosition hotOpponentPosition;
+  VecPosition hotBallPosition;
+
 public:
 
   bool          m_bWasCollision;        /*!<Indicates whether it is collision*/
@@ -445,6 +449,14 @@ public:
 
   SideT         getSidePenalty             (                                 );
   bool          setSidePenalty             ( SideT          side             );
+
+  VecPosition getHotTeammatePosition();
+  VecPosition getHotOpponentPosition();
+  VecPosition getHotBallPosition();
+  void setHotTeammatePosition(VecPosition pos);
+  void setHotOpponentPosition(VecPosition pos);
+  void setHotBallPosition(VecPosition pos);
+
 
   ////////////////////////// UPDATE METHODS (WorldModelUpdate.C)///////////////
 

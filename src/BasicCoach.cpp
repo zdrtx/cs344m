@@ -86,6 +86,7 @@ BasicCoach::BasicCoach( ActHandler* act, WorldModel *wm, ServerSettings *ss,
 
    ACT->sendMessage( str );
 
+  // Initialize grids
   for (rowIndex = 0; rowIndex < NUM_ROWS; rowIndex++) {
     for (colIndex = 0; colIndex < NUM_COLS; colIndex++) {
       teammateCounts[rowIndex][colIndex] = 0;
@@ -158,70 +159,9 @@ void BasicCoach::mainLoopNormal( )
     } else {
 
       //ACT->sendCommand(SoccerCommand(CMD_SAY, "hello"));
-      ACT->sendMessage("(say hello)");
-
-      int iIndex;
-      ObjectSetT set;
-
-      // TEAMMATES
-      set = OBJECT_SET_TEAMMATES;
-
-      for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
-            obj != OBJECT_ILLEGAL;
-            obj = WM->iterateObjectNext(iIndex, set) ) {
-        VecPosition playerPosition = WM->getGlobalPosition(obj);
-        int rowIndex = (int) floor(playerPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
-        int colIndex = (int) floor(playerPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
-
-        if (rowIndex < 0 || colIndex < 0 || 
-            rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
-          continue;
-        }
-
-        teammateCounts[rowIndex][colIndex]++;
-
-        cout << "teammateCounts[" << rowIndex << "][" << colIndex << 
-          "] incremented to " << teammateCounts[rowIndex][colIndex] << endl;
-      }
-
-      WM->iterateObjectDone(iIndex);
-
-      // OPPONENTS
-      set = OBJECT_SET_OPPONENTS;
-
-      for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
-            obj != OBJECT_ILLEGAL;
-            obj = WM->iterateObjectNext(iIndex, set) ) {
-        VecPosition playerPosition = WM->getGlobalPosition(obj);
-        int rowIndex = (int) floor(playerPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
-        int colIndex = (int) floor(playerPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
-
-        if (rowIndex < 0 || colIndex < 0 || 
-            rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
-          continue;
-        }
-
-        opponentCounts[rowIndex][colIndex]++;
-
-        cout << "opponentCounts[" << rowIndex << "][" << colIndex <<
-          "] incremented to " << opponentCounts[rowIndex][colIndex] << endl;
-      }
-
-      WM->iterateObjectDone(iIndex);
-
-      // BALL
-      VecPosition ballPosition = WM->getBallPos();
-      int rowIndex = (int) floor(ballPosition.getY() / FIELD_CELL_SIZE + PITCH_WIDTH / 2);
-      int colIndex = (int) floor(ballPosition.getX() / FIELD_CELL_SIZE + PITCH_LENGTH / 2);
-
-      if (!(rowIndex < 0 || colIndex < 0 || 
-          rowIndex >= NUM_ROWS || colIndex >= NUM_COLS)) {
-        ballCounts[rowIndex][colIndex]++;
-
-        cout << "ballCounts[" << rowIndex << "][" << colIndex <<
-          "] incremented to " << ballCounts[rowIndex][colIndex] << endl;
-      }
-
+      //ACT->sendMessage("(say (freeform \"opp_off_pos 0 0\"))");
+      updateCounts();
+      sendMessage();
 
     }
   
@@ -320,4 +260,142 @@ bool BasicCoach::executeStringCommand( char *str)
   printf( "send: %s\n", str );
   ACT->sendMessage( str );
   return true;
+}
+
+void BasicCoach::updateCounts()
+{
+  int iIndex;
+  ObjectSetT set;
+
+  // TEAMMATES
+  set = OBJECT_SET_TEAMMATES;
+
+  for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
+      obj != OBJECT_ILLEGAL;
+      obj = WM->iterateObjectNext(iIndex, set) ) {
+    VecPosition playerPosition = WM->getGlobalPosition(obj);
+    int rowIndex = (int) floor(
+        (playerPosition.getY() + PITCH_WIDTH / 2) / CELL_WIDTH
+        );
+    int colIndex = (int) floor(
+        (playerPosition.getX() + PITCH_LENGTH / 2) / CELL_LENGTH
+        );
+
+    if (rowIndex < 0 || colIndex < 0 || 
+        rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
+      continue;
+    }
+
+    teammateCounts[rowIndex][colIndex]++;
+
+    /*
+    cout << "teammateCounts[" << rowIndex << "][" << colIndex << 
+      "] incremented to " << teammateCounts[rowIndex][colIndex] << endl;
+      */
+  }
+
+  WM->iterateObjectDone(iIndex);
+
+  // OPPONENTS
+  set = OBJECT_SET_OPPONENTS;
+
+  for ( ObjectT obj = WM->iterateObjectStart(iIndex, set);
+      obj != OBJECT_ILLEGAL;
+      obj = WM->iterateObjectNext(iIndex, set) ) {
+    VecPosition playerPosition = WM->getGlobalPosition(obj);
+    int rowIndex = (int) floor(
+        (playerPosition.getY() + PITCH_WIDTH / 2) / CELL_WIDTH
+        );
+    int colIndex = (int) floor(
+        (playerPosition.getX() + PITCH_LENGTH / 2) / CELL_LENGTH
+        );
+
+    if (rowIndex < 0 || colIndex < 0 || 
+        rowIndex >= NUM_ROWS || colIndex >= NUM_COLS) {
+      continue;
+    }
+
+    opponentCounts[rowIndex][colIndex]++;
+
+    /*
+    cout << "opponentCounts[" << rowIndex << "][" << colIndex <<
+      "] incremented to " << opponentCounts[rowIndex][colIndex] << endl;
+      */
+  }
+
+  WM->iterateObjectDone(iIndex);
+
+  // BALL
+  VecPosition ballPosition = WM->getBallPos();
+  int rowIndex = (int) floor(
+      (ballPosition.getY() + PITCH_WIDTH / 2) / CELL_WIDTH
+      );
+  int colIndex = (int) floor(
+      (ballPosition.getX() + PITCH_LENGTH / 2) / CELL_LENGTH
+      );
+
+  if (!(rowIndex < 0 || colIndex < 0 || 
+        rowIndex >= NUM_ROWS || colIndex >= NUM_COLS)) {
+    ballCounts[rowIndex][colIndex]++;
+
+    /*
+    cout << "ballCounts[" << rowIndex << "][" << colIndex <<
+      "] incremented to " << ballCounts[rowIndex][colIndex] << endl;
+      */
+  }
+}
+
+void BasicCoach::sendMessage()
+{
+  int rowIndex, colIndex;
+  int maxTeammateValue, maxOpponentValue, maxBallValue;
+  double maxTeammateX, maxTeammateY;
+  double maxOpponentX, maxOpponentY;
+  double maxBallX, maxBallY;
+
+  char *msg = new char[100];
+
+  maxTeammateValue = 1;
+  maxOpponentValue = 1;
+  maxBallValue = 1;
+
+  maxOpponentX = 0;
+  maxOpponentY = 0;
+  maxTeammateX = 0;
+  maxTeammateY = 0;
+  maxBallX = 0;
+  maxBallY = 0;
+
+  for (rowIndex = 0; rowIndex < NUM_ROWS; rowIndex++)
+  {
+    for (colIndex = 0; colIndex < NUM_COLS; colIndex++)
+    {
+      double x = (colIndex * CELL_LENGTH) + (CELL_LENGTH / 2) - (PITCH_LENGTH / 2);
+      double y = (rowIndex * CELL_WIDTH) + (CELL_WIDTH / 2) - (PITCH_WIDTH / 2);
+      // TEAMMATES
+      if (teammateCounts[rowIndex][colIndex] > maxTeammateValue) {
+        maxTeammateValue = teammateCounts[rowIndex][colIndex];
+        maxTeammateX = x;
+        maxTeammateY = y;
+      }
+      // OPPONENTS
+      if (opponentCounts[rowIndex][colIndex] > maxOpponentValue) {
+        maxOpponentValue = opponentCounts[rowIndex][colIndex];
+        maxOpponentX = x;
+        maxOpponentY = y;
+      }
+      // BALL
+      if (ballCounts[rowIndex][colIndex] > maxBallValue) {
+        maxBallValue = ballCounts[rowIndex][colIndex];
+        maxBallX = x;
+        maxBallY = y;
+      }
+    }
+  }
+
+  sprintf(msg, "(say (freeform \"(team %.3f %.3f) (opp %.3f %.3f) (ball %.3f %.3f)\"))",
+    maxTeammateX, maxTeammateY, maxOpponentX, maxOpponentY, maxBallX, maxBallY
+  );
+  ACT->sendMessage(msg);
+
 }
