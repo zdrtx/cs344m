@@ -821,13 +821,6 @@ public:
                                             ObjectT        obj=OBJECT_ILLEGAL,
 					    PlayerSetT     ps = PS_ALL,
 					    FormationT     ft = FT_ILLEGAL   );
-  VecPosition   getBoundaryForces(VecPosition myPosition);
-  VecPosition 	getOffsidesForce(VecPosition myPosition);
-  VecPosition	getStrategicForces(VecPosition myPosition);
-  VecPosition	getBallFollowForce(VecPosition myPosition);
-  VecPosition   getTacticalForces(VecPosition myPosition);
-  VecPosition   getClearForce(VecPosition myPosition); 
-  VecPosition	getKickOffPosition(int iPlayer);
 
 
   // methods  for computing the actual argument for a soccer command.
