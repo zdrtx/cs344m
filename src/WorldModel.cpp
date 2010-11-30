@@ -1751,6 +1751,37 @@ bool WorldModel::setSidePenalty( SideT side )
   return true;
 }
 
+VecPosition getHotTeammatePosition()
+{
+  return hotTeammatePosition;
+}
+
+VecPosition getHotOpponentPosition()
+{
+  return hotOpponentPosition;
+}
+
+VecPosition getHotBallPosition()
+{
+  return hotBallPosition;
+}
+
+void setHotTeammatePosition(VecPosition pos)
+{
+  hotTeammatePosition = pos;
+}
+
+void setHotOpponentPosition(VecPosition pos)
+{
+  hotOpponentPosition = pos;
+}
+
+void setHotBallPosition(VecPosition pos)
+{
+  hotBallPosition = pos;
+}
+
+
 
 /*! This method checks whether the current play mode indicates that we have
     a corner kick. When the specified PlayModeT equals PM_ILLEGAL (default),
