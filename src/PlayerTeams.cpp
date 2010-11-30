@@ -258,7 +258,7 @@ SoccerCommand Player::deMeer5(  )
  * Begin research code
  */
  
-#define DEBUG 0
+#define DEBUG 11
 
 #define sigmoid(x) (1/(1+exp(-x)))
 
@@ -330,7 +330,7 @@ bool Player::isOffensive(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 1)
 	{
 		cout << "Number of teammates in front: " << numTeammatesAhead << endl;
 	}
@@ -354,7 +354,7 @@ bool Player::isDefensive(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 2)
 	{
 		cout << "Number of teammates in front: " << numTeammatesAhead << endl;
 	}
@@ -371,9 +371,8 @@ VecPosition Player::getForces(VecPosition myPosition)
 					getTacticalForce(myPosition) + getOpposingForce(myPosition),
 					getStrategicForce(myPosition)) + 
 			getBallFollowForce(myPosition) +
-			getOffensiveForce(myPosition) + 
-			getDefensiveForce(myPosition) +
-      getHotSpotForce(myPosition);
+			getTransitionForce(myPosition) + 
+      		getHotSpotForce(myPosition);
 }
 
 VecPosition Player::getBoundaryForce(VecPosition myPosition)
@@ -389,7 +388,7 @@ VecPosition Player::getBoundaryForce(VecPosition myPosition)
 	float forceX = ((x > xMax) ? -5 : ((x < xMin) ? 5 : (5 / (x - xMin) - 5 / (xMax - x))));
 	float forceY = ((y > yMax) ? -5 : ((y < yMin) ? 5 : (5 / (y - yMin) - 5 / (yMax - y))));
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 3)
 	{
 		cout << "Boundary forces: " << forceX << ", " << forceY << endl;
 	}
@@ -402,7 +401,7 @@ VecPosition Player::getOffsidesForce(VecPosition myPosition)
 	float xOff = WM->getOffsideX();
 	float forceX = soft_if(soft_less(xOff - myPosition.getX(), 5, 1), -5, 0);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 4)
 	{
 		cout << "Offsides force: " << forceX << endl;
 	}
@@ -428,7 +427,7 @@ VecPosition Player::getStrategicForce(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 5)
 	{
 		cout << "Stategic forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
 	}
@@ -451,7 +450,7 @@ VecPosition Player::getTacticalForce(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 6)
 	{
 		cout << "Tactical forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
 	}
@@ -511,7 +510,7 @@ VecPosition Player::getClearForce(VecPosition myPosition)
 	  orthVec = orthVec * force;
 	}
 
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 7)
 	{
 		cout << "Ball Pos: " << ballPosition << endl;
 		cout << "My Pos: " << myPosition << endl;
@@ -519,6 +518,7 @@ VecPosition Player::getClearForce(VecPosition myPosition)
 		cout << "Get Clear Force: " << force << endl;
 		cout << "OrthVec: " << orthVec << endl << endl;
 	}
+	
 	return orthVec;
 } 
 
@@ -528,7 +528,7 @@ VecPosition Player::getBallFollowForce(VecPosition myPosition)
 	float dist = WM->getRelativeDistance(OBJECT_BALL);
 	float force = soft_greater(dist, 30, 10);
 	
-	if(WM->getPlayerNumber() == 6 && DEBUG)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 8)
 	{
 		cout << "Follow Ball forces: " << force << endl;
 	}
@@ -536,7 +536,7 @@ VecPosition Player::getBallFollowForce(VecPosition myPosition)
 	return unitVector * force;
 }
 
-VecPosition Player::getOffensiveForce(VecPosition myPosition)
+VecPosition Player::getTransitionForce(VecPosition myPosition)
 {
 	if(isOffensive(myPosition))
 	{
@@ -547,20 +547,14 @@ VecPosition Player::getOffensiveForce(VecPosition myPosition)
 		VecPosition unitVec = (WM->getPosOpponentGoal() - myPosition).normalize();
 		unitVec.setY(unitVec.getY() * .5);
 	
-		if(WM->getPlayerNumber() == 6 && DEBUG)
+		if(WM->getPlayerNumber() == 9 && DEBUG == 9)
 		{
 			cout << "Offensive force: " << force << endl;
 		}
 	
 		return unitVec * force;
 	}
-	
-	return VecPosition(0, 0);
-}
-
-VecPosition Player::getDefensiveForce(VecPosition myPosition)
-{
-	if(isDefensive(myPosition))
+	else if(isDefensive(myPosition))
 	{
 		float xGoalie = WM->getGlobalPosition(WM->getOwnGoalieType()).getX();
 		float goalieX = soft_if(soft_less(myPosition.getX() - xGoalie, 5, 1), 5, 0);
@@ -572,7 +566,7 @@ VecPosition Player::getDefensiveForce(VecPosition myPosition)
 		VecPosition unitVec = (WM->getPosOwnGoal() - myPosition).normalize();
 		unitVec.setY(unitVec.getY() * .5);
 
-		if(WM->getPlayerNumber() == 6 && DEBUG)
+		if(WM->getPlayerNumber() == 2 && DEBUG == 10)
 		{
 			cout << "Goalie force: " << goalieX << endl;
 			cout << "Goal force: " << force << endl;
@@ -589,18 +583,37 @@ VecPosition Player::getHotSpotForce(VecPosition myPosition)
 {
   if(isDefensive(myPosition))
   {
-    VecPosition unitVector = (WM->getHotBallPosition() - myPosition).normalize();
-    float dist = WM->getRelativeDistance(OBJECT_BALL);
-    float force = soft_greater(dist, 30, 10);
+	VecPosition hotBallPos = WM->getHotBallPosition();
+    VecPosition unitVector = (hotBallPos - myPosition).normalize();
+    float dist = (hotBallPos - myPosition).getMagnitude();
+    double force = soft_if(soft_less(dist, 20, 0.1),
+							5*soft_greater(dist, 10, 5),
+							0);
+
+	if(WM->getPlayerNumber() == 2 && DEBUG == 11)
+	{
+		cout << "hotBallPos: " << hotBallPos << endl;
+		cout << "Unit Vec: " << unitVector << endl;
+		cout << "Force : " << force << endl;
+	}
 
     return unitVector * force;
   } 
   else if (isOffensive(myPosition))
   {
-    VecPosition vector = myPosition - WM->getHotOpponentPosition();
-    VecPosition unitVector = vector.normalize();
-    float dist = vector.getMagnitude();
-    float force = soft_greater(dist, 30, 10);
+  	VecPosition hotOppPos = WM->getHotOpponentPosition();
+    VecPosition unitVector = (myPosition - hotOppPos).normalize();
+    float dist = (myPosition - hotOppPos).getMagnitude();
+    float force = soft_if(soft_less(dist, 20, 0.1),
+							5*soft_less(dist, 10, 5),
+							0);
+							
+	if(WM->getPlayerNumber() == 9 && DEBUG == 12)
+	{
+		cout << "hotOppPos: " << hotOppPos << endl;
+		cout << "Unit Vec: " << unitVector << endl;
+		cout << "Force : " << force << endl;
+	}
 
     return unitVector * force;
   }
