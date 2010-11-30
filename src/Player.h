@@ -115,8 +115,30 @@ public:
   // simple teams (PlayerTeams.cpp)
   SoccerCommand deMeer5                   (                                  );
   SoccerCommand deMeer5_goalie            (                                  );
+  
+  /*
+   * Begin research code
+   */
+   
+  ObjectT		getLeastConfidentPlayer();
+  bool			isDefensive(VecPosition myPosition);
+  bool			isOffensive(VecPosition myPosition);
+  
+  VecPosition	getForces(VecPosition myPosition);
+  VecPosition   getBoundaryForce(VecPosition myPosition);
+  VecPosition 	getOffsidesForce(VecPosition myPosition);
+  VecPosition	getStrategicForce(VecPosition myPosition);
+  VecPosition	getBallFollowForce(VecPosition myPosition);
+  VecPosition   getTacticalForce(VecPosition myPosition);
+  VecPosition   getOpposingForce(VecPosition myPosition);
+  VecPosition   getCoverForce(VecPosition myPosition);
+  VecPosition   getClearForce(VecPosition myPosition); 
+  VecPosition	getOffensiveForce(VecPosition myPosition);
+  VecPosition	getDefensiveForce(VecPosition myPosition);
 
-
+  /*
+   * End research code
+   */
 };
 
 #endif
