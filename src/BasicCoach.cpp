@@ -288,8 +288,10 @@ void BasicCoach::updateCounts()
 
     teammateCounts[rowIndex][colIndex]++;
 
+    /*
     cout << "teammateCounts[" << rowIndex << "][" << colIndex << 
       "] incremented to " << teammateCounts[rowIndex][colIndex] << endl;
+      */
   }
 
   WM->iterateObjectDone(iIndex);
@@ -315,8 +317,10 @@ void BasicCoach::updateCounts()
 
     opponentCounts[rowIndex][colIndex]++;
 
+    /*
     cout << "opponentCounts[" << rowIndex << "][" << colIndex <<
       "] incremented to " << opponentCounts[rowIndex][colIndex] << endl;
+      */
   }
 
   WM->iterateObjectDone(iIndex);
@@ -334,8 +338,10 @@ void BasicCoach::updateCounts()
         rowIndex >= NUM_ROWS || colIndex >= NUM_COLS)) {
     ballCounts[rowIndex][colIndex]++;
 
+    /*
     cout << "ballCounts[" << rowIndex << "][" << colIndex <<
       "] incremented to " << ballCounts[rowIndex][colIndex] << endl;
+      */
   }
 }
 

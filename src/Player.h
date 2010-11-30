@@ -135,6 +135,7 @@ public:
   VecPosition   getClearForce(VecPosition myPosition); 
   VecPosition	getOffensiveForce(VecPosition myPosition);
   VecPosition	getDefensiveForce(VecPosition myPosition);
+  VecPosition getHotSpotForce(VecPosition myPosition);
 
   /*
    * End research code

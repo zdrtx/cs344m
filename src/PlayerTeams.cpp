@@ -359,12 +359,15 @@ VecPosition Player::getForces(VecPosition myPosition)
 	float ballDist = WM->getRelativeDistance(OBJECT_BALL);
 	return getBoundaryForce(myPosition) +
 			getOffsidesForce(myPosition) +
-			soft_if_vector(soft_less(ballDist, 20, 10),
+			soft_if_vector(
+        soft_less(ballDist, 20, 10),
 				getTacticalForce(myPosition) + getOpposingForce(myPosition),
-				getStrategicForce(myPosition)) + 
+				getStrategicForce(myPosition)
+      ) + 
 			getBallFollowForce(myPosition) +
 			getOffensiveForce(myPosition) + 
-			getDefensiveForce(myPosition);
+			getDefensiveForce(myPosition) +
+      getHotSpotForce(myPosition);
 }
 
 VecPosition Player::getBoundaryForce(VecPosition myPosition)
@@ -588,6 +591,28 @@ VecPosition Player::getDefensiveForce(VecPosition myPosition)
 	return VecPosition(0, 0);
 }
 
+VecPosition Player::getHotSpotForce(VecPosition myPosition)
+{
+  if(isDefensive(myPosition))
+  {
+    VecPosition unitVector = (WM->getHotBallPosition() - myPosition).normalize();
+    float dist = WM->getRelativeDistance(OBJECT_BALL);
+    float force = soft_greater(dist, 30, 10);
+
+    return unitVector * force;
+  } 
+  else if (isOffensive(myPosition))
+  {
+    VecPosition vector = myPosition - WM->getHotOpponentPosition();
+    VecPosition unitVector = vector.normalize();
+    float dist = vector.getMagnitude();
+    float force = soft_greater(dist, 30, 10);
+
+    return unitVector * force;
+  }
+
+  return VecPosition(0, 0);
+}
 
 /*
  * End research code
