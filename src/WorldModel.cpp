@@ -1751,32 +1751,32 @@ bool WorldModel::setSidePenalty( SideT side )
   return true;
 }
 
-VecPosition getHotTeammatePosition()
+VecPosition WorldModel::getHotTeammatePosition()
 {
   return hotTeammatePosition;
 }
 
-VecPosition getHotOpponentPosition()
+VecPosition WorldModel::getHotOpponentPosition()
 {
   return hotOpponentPosition;
 }
 
-VecPosition getHotBallPosition()
+VecPosition WorldModel::getHotBallPosition()
 {
   return hotBallPosition;
 }
 
-void setHotTeammatePosition(VecPosition pos)
+void WorldModel::setHotTeammatePosition(VecPosition pos)
 {
   hotTeammatePosition = pos;
 }
 
-void setHotOpponentPosition(VecPosition pos)
+void WorldModel::setHotOpponentPosition(VecPosition pos)
 {
   hotOpponentPosition = pos;
 }
 
-void setHotBallPosition(VecPosition pos)
+void WorldModel::setHotBallPosition(VecPosition pos)
 {
   hotBallPosition = pos;
 }

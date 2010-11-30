@@ -709,17 +709,24 @@ bool SenseHandler::analyzeCoachMessage( char *strMsg )
 
   Log.log( 605, "received coach messages: %s" , strMsg );
 
-  char *string = strstr(strMsg, "(freeform");
+  char *string = strstr(strMsg, "(team");
   if (string != NULL) {
-    char needle[100];
     double maxTeammateX, maxTeammateY, maxOpponentX, maxOpponentY, maxBallX, maxBallY;
 
-    sprintf(needle, "(freeform \"(team %f %f) (opp %f %f) (ball %f %f)");
-    sscanf(string, needle, &maxTeammateX, &maxTeammateY, &maxOpponentX, &maxOpponentY, &maxBallX, &maxBallY);
+    sscanf(
+      string, 
+      "(team %lf %lf) (opp %lf %lf) (ball %lf %lf)\"))", 
+      &maxTeammateX, 
+      &maxTeammateY, 
+      &maxOpponentX, 
+      &maxOpponentY, 
+      &maxBallX, 
+      &maxBallY
+    );
 
-    WM->setHotTeammatePosition(new VecPosition(maxTeammateX, maxTeammateY));
-    WM->setHotOpponentPosition(new VecPosition(maxOpponentX, maxOpponentY));
-    WM->setHotBallPosition(new VecPosition(maxBallX, maxBallY));
+    WM->setHotTeammatePosition(VecPosition(maxTeammateX, maxTeammateY));
+    WM->setHotOpponentPosition(VecPosition(maxOpponentX, maxOpponentY));
+    WM->setHotBallPosition(VecPosition(maxBallX, maxBallY));
 
   }
 
