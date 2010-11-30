@@ -1,0 +1,87 @@
+=================================
+CS344M Final Project - "HotSpots"
+Steven Rapp & Zach Ritter
+2D Simulator
+=================================
+Our semester research project is based on the UvA Trilearn 2003 Base code.
+We implemented and tweaked the force fields introduced in a class reading
+assignment, "An Architecture for Action Selection in Robotic Soccer" by Stone
+and McAllestar.  Additionally, we created some more force fields we felt were
+beneficial in the scope of a full soccer game that weren't already covered
+in the paper's exploration of the keepaway task.  Finally, pulling some
+inspiration from the papers on "Ant-like Agents", we implemented a coach that
+kept track of player and ball positions throughout a match, identified key
+offensive and defensive locations, and relayed the information to players so
+they could create appropriate force fields.
+
+
+======================
+Execution Instructions
+======================
+We've modified the start.sh script to run with just zero or one arguments.
+You can provide a specific host machine name as the single argument and the
+script will connect our team to the aforementioned host.  If no parameters are
+used, the script will default to "localhost" as the intended host machine.  Our
+team name has been hardcoded as "HotSpots", so you will run into issues if you
+attempt to play our team against itself without modifying the start script.
+
+Here is the format of the execution instructions:
+
+	>	./start.sh <hostname>
+
+
+==================
+Replay Information
+==================
+The replay demonstrates a full game against UvA Trilearn 2003 Base code.
+
+
+======================
+Code Modification List
+======================
+The following files have been modified during our research:
+
+	start.sh
+	src/BasicCoach.h
+	src/BasicCoach.cpp
+	src/Player.h
+	src/PlayerTeams.cpp
+	src/SenseHandler.cpp
+	src/WorldModel.h
+	src/WorldModel.cpp
+
+
+=============
+Code Overview
+=============
+start.sh
+	* Modified parameters to fit with requirements of project description
+
+src/BasicCoach.h
+	* Added additional function signatures to be used in BasicCoach.cpp
+
+src/BasicCoach.cpp
+	* Added tracking capabilities for monitoring opponent player and ball
+		positions throughout a match
+	* Added identification process of high traffic areas as hotspots
+	* Added communication capabilities to send hotspot info to players
+
+src/Player.h
+	* Added additional function signatures to be used in PlayerTeams.cpp
+
+src/PlayerTeams.cpp
+	* Modified the action selection portion (deMeer5()) to be similar
+		to Rapp's assignment 4 action selection (notably lacking capability)
+	* Added force field calculations
+	* Left goalie behavior unchanged
+	
+src/SenseHandler.cpp
+	* Modified analyzeCoachMessage function to handle messages sent by our
+		modified coach, detailing hotspot locations
+
+src/WorldModel.h
+	* Added additional function signatures to be used in WorldModel.cpp
+					
+src/WorldModel.cpp
+	* Added functions to allow a player to retrieve hotspots communicated by
+		the coach

@@ -16,7 +16,7 @@
 
 set wait  = 0
 set host  = "localhost"
-set team  = "UvA_Base_2003" 
+set team  = "HotSpots" 
 set dir   = "src"
 set prog  = "${dir}/trilearn_player"
 set coach = "${dir}/trilearn_coach"
@@ -35,16 +35,10 @@ echo "* Copyright 2002-2003.  Jelle Kok                               *"
 echo "* All rights reserved.                                          *"
 echo "*****************************************************************"
 
-#first check if the last two supplied arguments are no numbers and represent
-#<host-name> or <host-name> <team-name>
+#check if machine host provided
+#otherwise assume "localhost"
 if( $#argv > 0 && ($argv[$#argv] !~ [0123456789]* || $argv[$#argv] =~ *.* ) ) then
-  @ second_last = $#argv - 1  
-  if( $#argv > 1 && ($argv[$second_last] !~ [0123456789]* || $argv[$second_last] =~ *.* ) ) then
-      set host = $argv[$second_last]
-      set team = $argv[$#argv]
-  else
-      set host = $argv[$#argv]
-  endif
+	set host = $argv[$#argv]
 endif
 
 #then if first argument is a number, start only the players with the numbers

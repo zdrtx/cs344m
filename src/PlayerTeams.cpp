@@ -60,188 +60,198 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SoccerCommand Player::deMeer5(  )
 {
 
-SoccerCommand soc(CMD_ILLEGAL);
-VecPosition   posAgent = WM->getAgentGlobalPosition();
-VecPosition   posBall  = WM->getBallPos();
-int           iTmp;
+	SoccerCommand soc(CMD_ILLEGAL);
+	VecPosition   posAgent = WM->getAgentGlobalPosition();
+	VecPosition   posBall  = WM->getBallPos();
+	int           iTmp;
 
-if( WM->isBeforeKickOff( ) )
-{
-	if( WM->isKickOffUs( ) && WM->getPlayerNumber() == 9 ) // 9 takes kick
+	if( WM->isBeforeKickOff( ) )
 	{
-		if( WM->isBallKickable() )
+		if( WM->isKickOffUs( ) && WM->getPlayerNumber() == 9 ) // 9 takes kick
 		{
-			VecPosition posGoal( PITCH_LENGTH/2.0, (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
-			soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
-			Log.log( 100, "take kick off" );        
-		}
-		else
-		{
-			soc = intercept( false );  
-			Log.log( 100, "move to ball to take kick-off" );
-		}  
-		ACT->putCommandInQueue( soc );
-		ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
-		return soc;
-	}  
-	if( formations->getFormation() != FT_INITIAL || // not in kickoff formation
-			posAgent.getDistanceTo( WM->getStrategicPosition() ) > 2.0 )  
-	{
-		formations->setFormation( FT_INITIAL );       // go to kick_off formation
-		ACT->putCommandInQueue( soc=teleportToPos( WM->getStrategicPosition() ));
-	}
-	else                                            // else turn to center
-	{
-		ACT->putCommandInQueue( soc=turnBodyToPoint( VecPosition( 0, 0 ), 0 ) );
-		ACT->putCommandInQueue( alignNeckWithBody( ) );
-	}
-}
-else
-{
-	formations->setFormation( FT_433_OFFENSIVE );
-	soc.commandType = CMD_ILLEGAL;
-
-	if( WM->getConfidence( OBJECT_BALL ) < PS->getBallConfThr() )
-	{
-		//If ball pos unknown, search for it
-		ACT->putCommandInQueue( soc = searchBall() );
-		ACT->putCommandInQueue( alignNeckWithBody( ) );
-	}
-	else if( WM->isBallKickable())
-	{
-		//Check deadball situations
-		if( WM->isDeadBallUs())
-		{
-			ObjectT target = WM->getClosestInSetTo(OBJECT_SET_TEAMMATES_NO_GOALIE, OBJECT_BALL);
-			VecPosition posPass = WM->getGlobalPosition(target);
-			if(posAgent.getDistanceTo(posPass) < 10)
+			if( WM->isBallKickable() )
 			{
-				soc = directPass(posPass, PASS_NORMAL);
+				VecPosition posGoal( PITCH_LENGTH/2.0, (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
+				soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
+				Log.log( 100, "take kick off" );        
 			}
 			else
 			{
-				soc = directPass(posPass, PASS_FAST);
-			}
-			
+				soc = intercept( false );  
+				Log.log( 100, "move to ball to take kick-off" );
+			}  
 			ACT->putCommandInQueue( soc );
 			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
-			Log.log( 100, "kick ball" );
-		}
-		//Otherwise live ball
-		//Ball is kickable, shoot
-		//Are we within shooting distance of the opponent's goal?
-    	else if( WM->getRelDistanceOpponentGoal() < 25)
-    	{
-			//If so, shoot towards a random corner of the goal
-			VecPosition posGoal( PITCH_LENGTH/2.0,
-				  (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
-			soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
-
-			ACT->putCommandInQueue( soc );
-			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
-			Log.log( 100, "kick ball" );
-    	}
-    	//Is there a teammate we can pass to that's ahead of us?
-    	else
-    	{
-    		ObjectT teammate = WM->iterateObjectStart(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
-    		list<VecPosition> targets;
-    		while(teammate != OBJECT_ILLEGAL)
-    		{
-    			VecPosition posTeammate = WM->getGlobalPosition(teammate);
-    			if( posTeammate.getDistanceTo(WM->getPosOpponentGoal()) < WM->getRelDistanceOpponentGoal() &&
-    					posAgent.getDistanceTo(posTeammate) > 5 &&
-    					posAgent.getDistanceTo(posTeammate) < 35 &&
-    					WM->isOnside(teammate) &&
-    					WM->getListCloseOpponents(posTeammate, 10).size() == 0
-    					//WM->getGlobalPosition(WM->getFastestInSetTo(OBJECT_SET_OPPONENTS, teammate)).getDistanceTo(posTeammate) > 5
-    					)
-    			{
-    				targets.push_back(posTeammate);
-    			}
-    			teammate = WM->iterateObjectNext(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
-    		}
-			list<VecPosition>::iterator itr;
-    		if(targets.size() > 0)
-    		{
-    			//Select target to pass to randomly
-    			int pos = WM->getCurrentCycle() % targets.size();
-    			itr = targets.begin();
-    			for(int i = 0; i < pos; i++)
-    			{
-    				itr++;
-    			}
-    			VecPosition posPass = *itr;
-    			if(posAgent.getDistanceTo(posPass) < 10)
-				{
-					soc = directPass(posPass, PASS_NORMAL);
-				}
-				else
-				{
-					soc = directPass(posPass, PASS_FAST);
-				}
-    		}
-    		else
-    		{
-    			//There are no suitable targets to pass to, so dribble
-    			soc = dribble(WM->getRelAngleOpponentGoal(), DRIBBLE_FAST);
-    		}	
-    	}
-    	ACT->putCommandInQueue( soc );
-		ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
-		Log.log( 100, "kick ball" );
-	}
-	else if( WM->getFastestInSetTo( OBJECT_SET_TEAMMATES, OBJECT_BALL, &iTmp ) == WM->getAgentObjectType()  && !WM->isDeadBallThem() )
-	{           
-        //I'm fastest to ball, intercept
-		Log.log( 100, "I am fastest to ball; can get there in %d cycles", iTmp );
-		soc = intercept( false );
-
-		//If stamina is low
-		if( soc.commandType == CMD_DASH && WM->getAgentStamina().getStamina() < SS->getRecoverDecThr()*SS->getStaminaMax()+200 )
+			return soc;
+		}  
+	
+		if( formations->getFormation() != FT_INITIAL || // not in kickoff formation
+				posAgent.getDistanceTo( WM->getStrategicPosition() ) > 2.0 )  
 		{
-			// Dash slow
-			soc.dPower = 30.0 * WM->getAgentStamina().getRecovery(); 
-			ACT->putCommandInQueue( soc );
-			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+			formations->setFormation( FT_INITIAL );       // go to kick_off formation
+			ACT->putCommandInQueue( soc=teleportToPos( WM->getStrategicPosition() ));
 		}
-		else
+		else                                            // else turn to center
 		{
-			//Stamina is high, dash at full speed
-			ACT->putCommandInQueue( soc );              
-			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+			ACT->putCommandInQueue( soc=turnBodyToPoint( VecPosition( 0, 0 ), 0 ) );
+			ACT->putCommandInQueue( alignNeckWithBody( ) );
 		}
 	}
 	else
 	{
-		if( WM->getAgentStamina().getStamina() > SS->getRecoverDecThr()*SS->getStaminaMax()+800 ) // if stamina is high
+		formations->setFormation( FT_433_OFFENSIVE );
+		soc.commandType = CMD_ILLEGAL;
+
+		/*
+		 * Begin modified assignment 4 code
+		 */
+	
+		if( WM->getConfidence( OBJECT_BALL ) < PS->getBallConfThr() )
 		{
-			soc = moveToPos(posAgent + getForces(posAgent), PS->getPlayerWhenToTurnAngle());
-			ACT->putCommandInQueue( soc );            // move according to forces
-			if(WM->getCurrentCycle()%2 == 3)
+			//If ball pos unknown, search for it
+			ACT->putCommandInQueue( soc = searchBall() );
+			ACT->putCommandInQueue( alignNeckWithBody( ) );
+		}
+		else if( WM->isBallKickable())
+		{
+			//Check deadball situations
+			if( WM->isDeadBallUs())
 			{
+				ObjectT target = WM->getClosestInSetTo(OBJECT_SET_TEAMMATES_NO_GOALIE, OBJECT_BALL);
+				VecPosition posPass = WM->getGlobalPosition(target);
+				if(posAgent.getDistanceTo(posPass) < 10)
+				{
+					soc = directPass(posPass, PASS_NORMAL);
+				}
+			
+				else
+				{
+					soc = directPass(posPass, PASS_FAST);
+				}
+			
+				ACT->putCommandInQueue( soc );
+				ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+				Log.log( 100, "kick ball" );
+			}
+			//Otherwise live ball
+			else if( WM->getRelDistanceOpponentGoal() < 25)
+			{
+				//Are we within shooting distance of the opponent's goal?
+				//If so, shoot towards a random corner of the goal
+				VecPosition posGoal( PITCH_LENGTH/2.0,
+					  (-1 + 2*(WM->getCurrentCycle()%2)) * 0.4 * SS->getGoalWidth() );
+				soc = kickTo( posGoal, SS->getBallSpeedMax() ); // kick maximal
+
+				ACT->putCommandInQueue( soc );
+				ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+				Log.log( 100, "kick ball" );
+			}
+			//Is there a teammate we can pass to that's ahead of us?
+			else
+			{
+				ObjectT teammate = WM->iterateObjectStart(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
+				list<VecPosition> targets;
+				while(teammate != OBJECT_ILLEGAL)
+				{
+					VecPosition posTeammate = WM->getGlobalPosition(teammate);
+					if( posTeammate.getDistanceTo(WM->getPosOpponentGoal()) < WM->getRelDistanceOpponentGoal() - 5 &&
+							posAgent.getDistanceTo(posTeammate) > 5 &&
+							posAgent.getDistanceTo(posTeammate) < 35 &&
+							WM->isOnside(teammate) &&
+							WM->getListCloseOpponents(posTeammate, 10).size() == 0)
+					{
+						targets.push_back(posTeammate);
+					}
+					teammate = WM->iterateObjectNext(iTmp, OBJECT_SET_TEAMMATES_NO_GOALIE);
+				}
+				list<VecPosition>::iterator itr;
+				if(targets.size() > 0)
+				{
+					//Select target to pass to randomly
+					int pos = WM->getCurrentCycle() % targets.size();
+					itr = targets.begin();
+					for(int i = 0; i < pos; i++)
+					{
+						itr++;
+					}
+					VecPosition posPass = *itr;
+					if(posAgent.getDistanceTo(posPass) < 10)
+					{
+						soc = directPass(posPass, PASS_NORMAL);
+					}
+					else
+					{
+						soc = directPass(posPass, PASS_FAST);
+					}
+				}
+				else
+				{
+					//There are no suitable targets to pass to, so dribble
+					soc = dribble(WM->getRelAngleOpponentGoal(), DRIBBLE_FAST);
+				}	
+			}
+			ACT->putCommandInQueue( soc );
+			ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+			Log.log( 100, "kick ball" );
+		}
+		else if( WM->getFastestInSetTo( OBJECT_SET_TEAMMATES, OBJECT_BALL, &iTmp ) == WM->getAgentObjectType()  && !WM->isDeadBallThem() )
+		{           
+		    //I'm fastest to ball, intercept
+			Log.log( 100, "I am fastest to ball; can get there in %d cycles", iTmp );
+			soc = intercept( false );
+
+			//If stamina is low
+			if( soc.commandType == CMD_DASH && WM->getAgentStamina().getStamina() < SS->getRecoverDecThr()*SS->getStaminaMax()+200 )
+			{
+				// Dash slow
+				soc.dPower = 30.0 * WM->getAgentStamina().getRecovery(); 
+				ACT->putCommandInQueue( soc );
 				ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
 			}
 			else
 			{
-				ACT->putCommandInQueue( turnNeckToObject( getLeastConfidentPlayer(), soc ) );
-			}
-		}
-		else                                        // else watch ball
-		{
-			ACT->putCommandInQueue( soc = turnBodyToObject( OBJECT_BALL ) );
-			if(WM->getCurrentCycle()%2 == 3)
-			{
+				//Stamina is high, dash at full speed
+				ACT->putCommandInQueue( soc );              
 				ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
 			}
-			else
+		}
+		else
+		{
+			if( WM->getAgentStamina().getStamina() > SS->getRecoverDecThr()*SS->getStaminaMax()+800 )
 			{
-				ACT->putCommandInQueue( turnNeckToObject( getLeastConfidentPlayer(), soc ) );
+				// Stamina is high, move according to forces
+				soc = moveToPos(posAgent + getForces(posAgent), PS->getPlayerWhenToTurnAngle());
+				ACT->putCommandInQueue( soc );            
+				if(WM->getCurrentCycle()%2 == 3)
+				{
+					ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+				}
+				else
+				{
+					ACT->putCommandInQueue( turnNeckToObject( getLeastConfidentPlayer(), soc ) );
+				}
+			}
+			else                                        
+			{
+				//Stamina is low, update agent's modeling of players/ball
+				ACT->putCommandInQueue( soc = turnBodyToObject( OBJECT_BALL ) );
+				if(WM->getCurrentCycle()%2 == 3)
+				{
+					ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
+				}
+				else
+				{
+					ACT->putCommandInQueue( turnNeckToObject( getLeastConfidentPlayer(), soc ) );
+				}
 			}
 		}
+	
+		/*
+		 * End modified assignment 4 code
+		 */
 	}
-}
-return soc;
+	
+	return soc;
 }
 
 /*
@@ -277,8 +287,6 @@ VecPosition soft_if_vector(float p, VecPosition x, VecPosition y){
   VecPosition v = x * p + y *(1-p);
   return v;
 }
-
-
 
 ObjectT Player::getLeastConfidentPlayer()
 {
@@ -322,9 +330,9 @@ bool Player::isOffensive(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 2 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 1)
 	{
-		//cout << "Number of teammates in front: " << numTeammatesAhead << endl;
+		cout << "Number of teammates in front: " << numTeammatesAhead << endl;
 	}
 	
 	return numTeammatesAhead <= 2;
@@ -346,9 +354,9 @@ bool Player::isDefensive(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 2 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 2)
 	{
-		//cout << "Number of teammates in front: " << numTeammatesAhead << endl;
+		cout << "Number of teammates in front: " << numTeammatesAhead << endl;
 	}
 	
 	return numTeammatesAhead >= 7;
@@ -359,15 +367,12 @@ VecPosition Player::getForces(VecPosition myPosition)
 	float ballDist = WM->getRelativeDistance(OBJECT_BALL);
 	return getBoundaryForce(myPosition) +
 			getOffsidesForce(myPosition) +
-			soft_if_vector(
-        soft_less(ballDist, 20, 10),
-				getTacticalForce(myPosition) + getOpposingForce(myPosition),
-				getStrategicForce(myPosition)
-      ) + 
+			soft_if_vector(soft_less(ballDist, 20, 10),
+					getTacticalForce(myPosition) + getOpposingForce(myPosition),
+					getStrategicForce(myPosition)) + 
 			getBallFollowForce(myPosition) +
-			getOffensiveForce(myPosition) + 
-			getDefensiveForce(myPosition) +
-      getHotSpotForce(myPosition);
+			getTransitionForce(myPosition) + 
+      		getHotSpotForce(myPosition);
 }
 
 VecPosition Player::getBoundaryForce(VecPosition myPosition)
@@ -379,16 +384,13 @@ VecPosition Player::getBoundaryForce(VecPosition myPosition)
 
 	float x = myPosition.getX();
 	float y = myPosition.getY();
-
-	//float forceX = soft_if(soft_greater(myX, xMax-2.5, 1), -10, 0) + soft_if(soft_less(myX, xMin+2.5, 1), 10, 0);
-	//float forceY = soft_if(soft_greater(myY, yMax-2.5, 1), -10, 0) + soft_if(soft_less(myY, yMin+2.5, 1), 10, 0);
 	
 	float forceX = ((x > xMax) ? -5 : ((x < xMin) ? 5 : (5 / (x - xMin) - 5 / (xMax - x))));
 	float forceY = ((y > yMax) ? -5 : ((y < yMin) ? 5 : (5 / (y - yMin) - 5 / (yMax - y))));
 	
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 3)
 	{
-		//cout << "Boundary forces: " << forceX << ", " << forceY << endl;
+		cout << "Boundary forces: " << forceX << ", " << forceY << endl;
 	}
 	
 	return VecPosition(forceX, forceY);
@@ -397,12 +399,11 @@ VecPosition Player::getBoundaryForce(VecPosition myPosition)
 VecPosition Player::getOffsidesForce(VecPosition myPosition)
 {
 	float xOff = WM->getOffsideX();
-	//float forceX = soft_if(soft_greater(myPosition.getX(), xOff-1, 1), -15, 0);
 	float forceX = soft_if(soft_less(xOff - myPosition.getX(), 5, 1), -5, 0);
 	
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 4)
 	{
-		//cout << "Offsides force: " << forceX << endl;
+		cout << "Offsides force: " << forceX << endl;
 	}
 	
 	return VecPosition(forceX, 0);
@@ -426,9 +427,9 @@ VecPosition Player::getStrategicForce(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 5)
 	{
-		//cout << "Stategic forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
+		cout << "Stategic forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
 	}
 	
 	return aggregateForce;
@@ -449,9 +450,9 @@ VecPosition Player::getTacticalForce(VecPosition myPosition)
 	}
 	WM->iterateObjectDone(iIndex);
 	
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 6)
 	{
-		//cout << "Tactical forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
+		cout << "Tactical forces: " << aggregateForce.getX() << ", " << aggregateForce.getY() << endl;
 	}
 	
 	return aggregateForce;
@@ -459,11 +460,11 @@ VecPosition Player::getTacticalForce(VecPosition myPosition)
 
 VecPosition Player::getOpposingForce(VecPosition myPosition)
 {
-	if(isDefensive(myPosition)) // I am one of last 3 defenders back (besides goalie)
+	if(isDefensive(myPosition))
 	{
 		return getCoverForce(myPosition);
 	}
-	// I am attacking
+	
 	return getClearForce(myPosition);
 }
 
@@ -488,7 +489,6 @@ VecPosition Player::getClearForce(VecPosition myPosition)
 	{
 		VecPosition pos = WM->getGlobalPosition(obj);
 		double dist = passLane.getDistanceWithPoint(pos);
-		//cout << "D (" << iIndex << "): " << pos << " " << dist << endl;
 		if(dist < closestDistToPassLane)
 		{
 			closestDistToPassLane = dist;
@@ -510,14 +510,15 @@ VecPosition Player::getClearForce(VecPosition myPosition)
 	  orthVec = orthVec * force;
 	}
 
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 7)
 	{
-		//cout << "Ball Pos: " << ballPosition << endl;
-		//cout << "My Pos: " << myPosition << endl;
-		//cout << "Key D Pos: " << keyDPosition << endl;
-		//cout << "Get Clear Force: " << force << endl;
-		//cout << "OrthVec: " << orthVec << endl << endl;
+		cout << "Ball Pos: " << ballPosition << endl;
+		cout << "My Pos: " << myPosition << endl;
+		cout << "Key D Pos: " << keyDPosition << endl;
+		cout << "Get Clear Force: " << force << endl;
+		cout << "OrthVec: " << orthVec << endl << endl;
 	}
+	
 	return orthVec;
 } 
 
@@ -527,65 +528,52 @@ VecPosition Player::getBallFollowForce(VecPosition myPosition)
 	float dist = WM->getRelativeDistance(OBJECT_BALL);
 	float force = soft_greater(dist, 30, 10);
 	
-	if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+	if(WM->getPlayerNumber() == 6 && DEBUG == 8)
 	{
-		//cout << "Follow Ball forces: " << force << endl;
+		cout << "Follow Ball forces: " << force << endl;
 	}
 	
 	return unitVector * force;
 }
 
-VecPosition Player::getOffensiveForce(VecPosition myPosition)
+VecPosition Player::getTransitionForce(VecPosition myPosition)
 {
 	if(isOffensive(myPosition))
 	{
-		float forceX = soft_if(soft_greater(WM->getBallPos().getX(), 10, 10), 2, -.25);
-						//		soft_greater(WM->getBallPos().getX(), myPosition.getX(), 1),
-						//		0);
+		float force = soft_if(soft_greater(WM->getBallPos().getX(), 10, 10),
+								5 * soft_less(myPosition.getX(), 30, 10),
+								-.25);
 						
 		VecPosition unitVec = (WM->getPosOpponentGoal() - myPosition).normalize();
+		unitVec.setY(unitVec.getY() * .5);
 	
-		if(WM->getPlayerNumber() == 9 && DEBUG == 1)
+		if(WM->getPlayerNumber() == 9 && DEBUG == 9)
 		{
-			//cout << "Offensive force: " << forceX << endl;
+			cout << "Offensive force: " << force << endl;
 		}
 	
-		return unitVec * forceX;
+		return unitVec * force;
 	}
-	
-	return VecPosition(0, 0);
-}
-
-VecPosition Player::getDefensiveForce(VecPosition myPosition)
-{
-	if(isDefensive(myPosition))
+	else if(isDefensive(myPosition))
 	{
 		float xGoalie = WM->getGlobalPosition(WM->getOwnGoalieType()).getX();
 		float goalieX = soft_if(soft_less(myPosition.getX() - xGoalie, 5, 1), 5, 0);
 		
-		float goalForce = soft_if(soft_less(WM->getBallPos().getX(), -10, 10), //10, -.25);
-								5 * soft_greater(myPosition.getX(), -30, 10), -.25);
-		
-		
-		
-							//	soft_less(WM->getBallPos().getX(), myPosition.getX(), -1),
-							//	0);
+		float force = soft_if(soft_less(WM->getBallPos().getX(), -10, 10),
+								5 * soft_greater(myPosition.getX(), -30, 10),
+								-.25);
 	
 		VecPosition unitVec = (WM->getPosOwnGoal() - myPosition).normalize();
-	
-	
-	
-	
-		if(WM->getPlayerNumber() == 2 && DEBUG == 1)
+		unitVec.setY(unitVec.getY() * .5);
+
+		if(WM->getPlayerNumber() == 2 && DEBUG == 10)
 		{
 			cout << "Goalie force: " << goalieX << endl;
-			cout << "Goal force: " << goalForce << endl;
+			cout << "Goal force: " << force << endl;
 			cout << "Unit Vec: " << unitVec << endl;
 		}
-		
-		
-	
-		return VecPosition(goalieX, 0) + unitVec * goalForce;
+
+		return VecPosition(goalieX, 0) + unitVec * force;
 	}
 	
 	return VecPosition(0, 0);
@@ -599,23 +587,37 @@ VecPosition Player::getHotSpotForce(VecPosition myPosition)
   {
     if(isDefensive(myPosition))
     {
-      /*
-      if (WM->getPlayerNumber() == 2) {
-        cout << index << " : " << WM->getHotBallPositions()[index] << endl;
+      VecPosition hotBallPos = WM->getHotBallPositions()[index];
+      VecPosition unitVector = (hotBallPos - myPosition).normalize();
+      float dist = (hotBallPos - myPosition).getMagnitude();
+      double force = soft_if(soft_less(dist, 20, 0.1),
+                5*soft_greater(dist, 10, 5),
+                0);
+
+      if(WM->getPlayerNumber() == 2 && DEBUG == 11)
+      {
+        cout << "hotBallPos: " << index << " : " << hotBallPos << endl;
+        cout << "Unit Vec: " << unitVector << endl;
+        cout << "Force : " << force << endl;
       }
-      */
-      VecPosition unitVector = (WM->getHotBallPositions()[index] - myPosition).normalize();
-      float dist = WM->getRelativeDistance(OBJECT_BALL);
-      float force = soft_greater(dist, 30, 10);
 
       accumulator += unitVector * force;
     } 
     else if (isOffensive(myPosition))
     {
-      VecPosition vector = myPosition - WM->getHotOpponentPositions()[index];
-      VecPosition unitVector = vector.normalize();
-      float dist = vector.getMagnitude();
-      float force = soft_greater(dist, 30, 10);
+      VecPosition hotOppPos = WM->getHotOpponentPositions()[index];
+      VecPosition unitVector = (myPosition - hotOppPos).normalize();
+      float dist = (myPosition - hotOppPos).getMagnitude();
+      float force = soft_if(soft_less(dist, 20, 0.1),
+          5*soft_less(dist, 10, 5),
+          0);
+
+      if(WM->getPlayerNumber() == 9 && DEBUG == 12)
+      {
+        cout << "hotOppPos: " << index << " : " << hotOppPos << endl;
+        cout << "Unit Vec: " << unitVector << endl;
+        cout << "Force : " << force << endl;
+      }
 
       accumulator += unitVector * force;
     }
