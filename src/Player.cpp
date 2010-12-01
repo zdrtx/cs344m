@@ -81,6 +81,8 @@ Player::Player( ActHandler* act, WorldModel *wm, ServerSettings *ss,
   m_timeLastSay = -5;
   m_objMarkOpp  = OBJECT_ILLEGAL;
   m_actionPrev  = ACT_ILLEGAL;
+  numOfCatches	= 0;
+  ballCaught	= false;
 
   // wait longer as role number increases, to make sure players appear at the
   // field in the correct order
@@ -213,8 +215,35 @@ void Player::mainLoop( )
                          ((double)WM->iNrTeammatesSeen/WM->getCurrentCycle()));
   printf("   Opponents seen: %d (%f)\n", WM->iNrOpponentsSeen,
                          ((double)WM->iNrOpponentsSeen/WM->getCurrentCycle()));
+  if(formations->getPlayerType( ) == PT_GOALKEEPER)
+  {
+  	writeStatsToFile("CATCHES", WM->getTeamName(), numOfCatches, NULL);
+  }
 
 }
+
+void Player::writeStatsToFile(const char *statName, const char *teamName, double value, int histogram[])
+{
+	char fileName [300];
+	sprintf(fileName, "STATS_%s_%s_%d.txt", statName, teamName, time(NULL));
+	ofstream outputFile;
+	outputFile.open(fileName);
+	
+	outputFile << value << endl;
+	
+	if(histogram != NULL)
+	{
+		//for(int i = 0; i < NUM_BUCKETS; i++)
+		for(int i = 0; i < 9; i++)
+		{
+			outputFile << i << ", " << histogram[i] << endl;
+		}
+	}
+	
+	outputFile.close();
+
+}
+
 
 
 /*! This is the main decision loop for the goalkeeper. */

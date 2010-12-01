@@ -687,6 +687,7 @@ SoccerCommand Player::deMeer5_goalie(  )
   {
     if( WM->isBallCatchable() )
     {
+      ballCaught = false;
       ACT->putCommandInQueue( soc = catchBall() );
       ACT->putCommandInQueue( turnNeckToObject( OBJECT_BALL, soc ) );
     }
@@ -760,6 +761,12 @@ SoccerCommand Player::deMeer5_goalie(  )
       }
       else if( WM->getTimeSinceLastCatch() < 25 )
       {
+      	if(!ballCaught)
+      	{
+      		numOfCatches++;
+      		ballCaught = true;
+      	}
+      	
         VecPosition posSide( 0.0, posAgent.getY() ); 
         if( fabs( (posSide - posAgent).getDirection() - angBody) > 10 )
         {

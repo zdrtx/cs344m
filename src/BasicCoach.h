@@ -100,7 +100,7 @@ protected:
   
   int playerToTeammateDistances[NUM_BUCKETS];
   double playerToTeammateDistancesRunningAverage;
-
+  
   int playerToClosestDefenderDistances[NUM_BUCKETS];
   double playerToClosestDefenderDistancesRunningAverage;
 
@@ -120,6 +120,7 @@ public:
   void          handleStdin               (                                  );
   void          showStringCommands        ( ostream& out                     );
   bool          executeStringCommand      ( char *str                        );
+  void			writeStatsToFile			(const char *statName, const char *teamName, double value, int histogram[]);
 
 };
 

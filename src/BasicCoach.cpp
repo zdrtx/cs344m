@@ -128,6 +128,11 @@ void BasicCoach::mainLoopNormal( )
              WM->isConfidenceGood( OBJECT_TEAMMATE_11 )) ;
     if(  WM->waitForNewInformation() == false )
     {
+    	/*
+    	 *
+    	 *	Put output code here!!!
+    	 *
+    	 */
       printf( "Shutting down coach\n" );
       bContLoop = false;
     }
@@ -181,6 +186,27 @@ void BasicCoach::mainLoopNormal( )
   }
 
   return;
+}
+
+
+void BasicCoach::writeStatsToFile(const char *statName, const char *teamName, double value, int histogram[])
+{
+	char fileName [300];
+	sprintf(fileName, "STATS_%s_%s_%d.txt", statName, teamName, time(NULL));
+	ofstream outputFile;
+	outputFile.open(fileName);
+	
+	outputFile << value << endl;
+	
+	if(histogram != NULL)
+	{
+		for(int i = 0; i < NUM_BUCKETS; i++)
+		{
+			outputFile << i << ", " << histogram[i] << endl;
+		}
+	}
+	
+	outputFile.close();
 }
 
 

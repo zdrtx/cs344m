@@ -73,6 +73,9 @@ class Player:public BasicPlayer
   int           m_iPenaltyNr;            /*!< number of current penalty      */
 
   ActionT       m_actionPrev;            /*!< previous action of this agent  */
+  
+  int			numOfCatches;
+  bool			ballCaught;
 
   SoccerCommand goalieMainLoop            (                                  );
   SoccerCommand defenderMainLoop          (                                  );
@@ -139,6 +142,8 @@ public:
   /*
    * End research code
    */
+   
+   void			writeStatsToFile(const char *statName, const char *teamName, double value, int histogram[]);
 };
 
 #endif
