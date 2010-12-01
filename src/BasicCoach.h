@@ -62,6 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CELL_LENGTH (PITCH_LENGTH / NUM_COLS)
 #define SEND_FREQ 50
 #define DECAY_FREQ 50
+#define NUM_BUCKETS 125
 
 /*! This class starts a simple coach, which actions are defined in the method
     mainLoop. It uses an ActHandler to send actions to the server and can
@@ -87,6 +88,25 @@ protected:
 
   int lastCycleSent;
   int lastCycleDecayed;
+
+  // Stuff for statistics gathered (used to measure our success!)
+
+  long numberOfRecordings;
+
+  long numberOfPossessions;
+  
+  int playerToBallDistances[NUM_BUCKETS]; 
+  double playerToBallDistancesRunningAverage;
+  
+  int playerToTeammateDistances[NUM_BUCKETS];
+  double playerToTeammateDistancesRunningAverage;
+
+  int playerToClosestDefenderDistances[NUM_BUCKETS];
+  double playerToClosestDefenderDistancesRunningAverage;
+
+  int closestPlayerToBallDistances[NUM_BUCKETS];
+  double closestPlayerToBallDistancesRunningAverage;
+
 
 public:
   BasicCoach( ActHandler* a, WorldModel *wm, ServerSettings *ss,
